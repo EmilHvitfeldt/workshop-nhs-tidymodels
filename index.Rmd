@@ -1,0 +1,63 @@
+---
+title: "Machine Learning with {tidymodels}"
+author:
+- name: Emil Hvitfeldt
+  url: https://www.emilhvitfeldt.com/
+  affiliation: Teladoc Health
+  affiliation_url: https://www.teladochealth.com/
+  orcid_id: 0000-0002-0679-1945
+date: "2021-11-02"
+description: |
+  1 day workshop at NHS-R Conference – 2021
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r meta, echo=FALSE}
+library(metathis)
+meta() %>%
+ meta_general(
+   description = "Machine Learning with {tidymodels}",
+   generator = "xaringan and remark.js"
+ ) %>%
+ meta_name("github-repo" = "EmilHvitfeldt/nhs-tidymodels-workshop") %>%
+ meta_social(
+   title = "Machine Learning with {tidymodels}",
+   url = "https://nhs-tidymodels-workshop.netlify.app/",
+   og_type = "website",
+   twitter_card_type = "summary_large_image"
+ )
+```
+
+## Welcome  
+
+Summary: This workshop will provide a gentle introduction to machine learning with R using the modern suite of predictive modeling packages called {tidymodels}.
+We will build, evaluate, compare, and tune predictive models. Along the way, we’ll learn about key concepts in machine learning including overfitting, the holdout method, the bias-variance trade-off, ensembling, cross-validation, and feature engineering.
+Learners will gain knowledge about good predictive modeling practices, as well as hands-on experience using {tidymodels} packages like {parsnip}, {rsample}, {recipes}, {yardstick}, and {tune}.
+
+Pre-requisites: Some introductory experience with R.
+
+## Slides
+
++ [1: Introduction](1-introduction.html)
++ [2: Models](2-models.html)
++ [3: Features](3-features.html)
++ [4: Resampling](4-resampling.html)
++ [5: Tuning](5-tuning.html)
+
+## Labs
+
+Link to lab for local download [here](static/labs.Rmd)
+
+## Links
+
++ Link to tidymodels main website <https://www.tidymodels.org/>
+
++ Link to "Tidy Modeling with R" book: <https://www.tmwr.org/>
+
+## Acknowledgments {.appendix}
+
+This is website made with the [distill package](https://rstudio.github.io/distill/).

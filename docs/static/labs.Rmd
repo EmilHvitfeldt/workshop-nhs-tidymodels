@@ -1,0 +1,259 @@
+---
+title: "Machine learning with Tidymodels playpen"
+subtitle: "NHS-R Conference 2021"
+author: "Your Name"
+date: "11/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document will serve as a place where you can run some of the code yourself to get a feel for the tidymodels code. I highly encourage you to write notes in this document and take it with you for later use.
+
+```{r packages}
+library(tidymodels)
+```
+
+## Introduction
+
+We will be working on the `Chicago` data set today. It can be loaded in with the following code (remember to load `tidymodels` first to load the {modeldata} package). I would like you to take a look at this data set. {dplyr} and {ggplot2} comes loaded with {tidymodels} for you to be able to explore data. 
+
+The goal of this section is for you to get familiar with the `Chicago` data set.
+
+```{r}
+data("Chicago")
+dim(Chicago)
+stations
+```
+
+## Models
+
+This section will let you get some training fitting models. Once you know the general structure in tidymodels, then using different models comes with much less friction.
+
+Validation splitting:
+
+```{r split}
+set.seed(1234)
+chi_split <- initial_time_split(Chicago, prop = 1 - (14/nrow(Chicago)))
+
+chi_train <- training(chi_split)
+chi_test  <- testing(chi_split)
+```
+
+A linear regression specification using `linear_reg()`. Note that we are using the `"lm"` engine to specify we want the `lm()` function to do the calculations.
+
+```{r}
+spec_lm <- linear_reg() %>% 
+  set_engine("lm") %>%
+  set_mode("regression")
+```
+
+then we fit the model like normal
+
+```{r}
+fit_lm <- fit(
+  spec_lm,
+  ridership ~ Clark_Lake + humidity,
+  data = chi_train
+)
+
+fit_lm
+```
+
+Moving forward we will be using `workflow()` to construct the models. This will perform the 
+
+```{r}
+reg_wflow <- 
+  workflow() %>% # attached with the tidymodels package
+  add_model(spec_lm) %>% 
+  add_formula(ridership ~ Clark_Lake + humidity) # or add_recipe() or add_variables()
+
+reg_fit <- fit(reg_wflow, data = chi_train)
+reg_fit
+```
+
+Try swapping the model we use. You could also use a random forest with `rand_forest()`, or any of the other regression models available in [parsnip or addon packages](https://www.tidymodels.org/find/parsnip/).
+
+```{r}
+spec_tree <- decision_tree() %>%
+  set_engine("rpart") %>%
+  set_mode("regression")
+
+tree_wflow <- 
+  reg_wflow %>% 
+  update_model(spec_tree)
+
+set.seed(21)
+tree_fit <- fit(tree_wflow, data = chi_train)
+tree_fit
+```
+
+Once you have a model you can `predict()` with it. `augment()` is a personal favorite of mine since it attaches the predictions to the data set.
+
+```{r}
+predict(reg_fit, chi_train)
+augment(reg_fit, chi_train)
+```
+
+## Features
+
+This section gives you a basic recipe. You can run this, try some variations as shown in the slides or look for more steps in the [recipes documentation](https://recipes.tidymodels.org/reference/index.html).
+
+```{r}
+chi_rec <- 
+  recipe(ridership ~ ., data = chi_train) %>% 
+  step_date(date, features = c("dow", "month", "year")) %>% 
+  step_holiday(date) %>% 
+  update_role(date, new_role = "id") %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_corr(all_numeric_predictors(), threshold = 0.9)
+```
+
+Here we are using the previously specified `spec_lm`. You could swap in any other model specification.
+
+```{r}
+chi_wflow <- 
+  workflow() %>% 
+  add_model(spec_lm) %>% 
+  add_recipe(chi_rec)
+
+chi_fit <- chi_wflow %>% fit(chi_train)
+chi_fit
+```
+
+## Resampling
+
+We can now produce a resampled data set. Note how we are using sliding periods. If your data doesn't have a time compoment you can use `bootstraps()` or `vfold_cv()`. If you have time to spare, try to create resamples using `vfold_cv()` and look at how the estimated performance differs to when we use a sliding window.
+
+```{r}
+chi_rs <-
+  chi_train %>%
+  sliding_period(
+    index = "date",  
+    period = "week",
+    lookback = 52 * 15,
+    assess_stop = 2,
+    step = 2
+  )
+```
+
+I want you to see what happens when you set `verbose = TRUE`. It defaults to `FALSE` and you properly want it to be false for many cases.
+
+```{r}
+ctrl <- control_resamples(save_pred = TRUE, verbose = TRUE)
+
+chi_res <-
+  chi_wflow %>% 
+  fit_resamples(resamples = chi_rs, control = ctrl)
+chi_res
+```
+
+To obtain the resampling estimates of performance: 
+
+```{r}
+collect_metrics(chi_res)
+```
+
+To get the holdout predictions: 
+
+```{r}
+chi_pred <- collect_predictions(chi_res)
+chi_pred %>% slice(1:4)
+```
+
+## Tuning
+
+We will now create a new workflow with tuneable parameters. The tunable parameters are specified using the `tune()` function.
+
+```{r}
+lm_spec <- 
+  linear_reg(penalty = tune(), mixture = tune()) %>% 
+  set_engine("glmnet") 
+
+chi_rec <- 
+  recipe(ridership ~ ., data = chi_train) %>% 
+  step_date(date, features = c("dow", "year")) %>% 
+  step_holiday(date) %>% 
+  update_role(date, new_role = "id") %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_ns(temp, deg_free = tune()) %>%
+  step_normalize(all_numeric_predictors())
+
+chi_wflow <- 
+  workflow() %>% 
+  add_model(lm_spec) %>% 
+  add_recipe(chi_rec)
+```
+
+You can see what tuning parameters are set for tuning using the `parameters()` function.
+
+```{r}
+chi_wflow %>% 
+  parameters()
+```
+
+We also set up a hypercube of parameters.
+
+```{r}
+set.seed(2)
+grid <- 
+  chi_wflow %>% 
+  parameters() %>% 
+  grid_latin_hypercube(size = 25)
+
+grid
+```
+
+We can not fit this model over the different parameters.
+
+```{r}
+ctrl <- control_grid(save_pred = TRUE)
+
+set.seed(9)
+chi_res <- 
+  tune_grid(
+    chi_wflow, 
+    resamples = chi_rs, 
+    grid = grid
+  )
+chi_res
+```
+
+We can visualize the model 
+
+```{r}
+autoplot(chi_res, metric = "rmse")
+```
+
+and see how well each model is doing
+
+```{r}
+collect_metrics(chi_res)
+```
+
+Look at the best performing sets of hyperparameters
+
+```{r}
+show_best(chi_res, metric = "rmse")
+smallest_rmse <- 
+  select_best(chi_res, metric = "rmse")
+smallest_rmse
+```
+
+Updating the workflow and final fit
+
+```{r}
+chi_wflow <-
+  chi_wflow %>% 
+  finalize_workflow(smallest_rmse)
+
+test_res <- 
+  chi_wflow %>% 
+  last_fit(split = chi_split)
+test_res
+```

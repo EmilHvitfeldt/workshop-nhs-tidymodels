@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Creating Models</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Emil Hvitfeldt" />
+    <meta name="date" content="2021-11-02" />
+    <!--radix_placeholder_navigation_in_header-->
+    <meta name="distill:offset" content=""/>
+
+    <script type="application/javascript">
+
+      window.headroom_prevent_pin = false;
+
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+
+        // initialize headroom for banner
+        var header = $('header').get(0);
+        var headerHeight = header.offsetHeight;
+        var headroom = new Headroom(header, {
+          tolerance: 5,
+          onPin : function() {
+            if (window.headroom_prevent_pin) {
+              window.headroom_prevent_pin = false;
+              headroom.unpin();
+            }
+          }
+        });
+        headroom.init();
+        if(window.location.hash)
+          headroom.unpin();
+        $(header).addClass('headroom--transition');
+
+        // offset scroll location for banner on hash change
+        // (see: https://github.com/WickyNilliams/headroom.js/issues/38)
+        window.addEventListener("hashchange", function(event) {
+          window.scrollTo(0, window.pageYOffset - (headerHeight + 25));
+        });
+
+        // responsive menu
+        $('.distill-site-header').each(function(i, val) {
+          var topnav = $(this);
+          var toggle = topnav.find('.nav-toggle');
+          toggle.on('click', function() {
+            topnav.toggleClass('responsive');
+          });
+        });
+
+        // nav dropdowns
+        $('.nav-dropbtn').click(function(e) {
+          $(this).next('.nav-dropdown-content').toggleClass('nav-dropdown-active');
+          $(this).parent().siblings('.nav-dropdown')
+             .children('.nav-dropdown-content').removeClass('nav-dropdown-active');
+        });
+        $("body").click(function(e){
+          $('.nav-dropdown-content').removeClass('nav-dropdown-active');
+        });
+        $(".nav-dropdown").click(function(e){
+          e.stopPropagation();
+        });
+      });
+    </script>
+
+    <style type="text/css">
+
+    /* Theme (user-documented overrideables for nav appearance) */
+
+    .distill-site-nav {
+      color: rgba(255, 255, 255, 0.8);
+      background-color: #0F2E3D;
+      font-size: 15px;
+      font-weight: 300;
+    }
+
+    .distill-site-nav a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .distill-site-nav a:hover {
+      color: white;
+    }
+
+    @media print {
+      .distill-site-nav {
+        display: none;
+      }
+    }
+
+    .distill-site-header {
+
+    }
+
+    .distill-site-footer {
+
+    }
+
+
+    /* Site Header */
+
+    .distill-site-header {
+      width: 100%;
+      box-sizing: border-box;
+      z-index: 3;
+    }
+
+    .distill-site-header .nav-left {
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header .nav-left {
+        margin-left: 0;
+      }
+    }
+
+
+    .distill-site-header .nav-right {
+      float: right;
+      margin-right: 8px;
+    }
+
+    .distill-site-header a,
+    .distill-site-header .title {
+      display: inline-block;
+      text-align: center;
+      padding: 14px 10px 14px 10px;
+    }
+
+    .distill-site-header .title {
+      font-size: 18px;
+      min-width: 150px;
+    }
+
+    .distill-site-header .logo {
+      padding: 0;
+    }
+
+    .distill-site-header .logo img {
+      display: none;
+      max-height: 20px;
+      width: auto;
+      margin-bottom: -4px;
+    }
+
+    .distill-site-header .nav-image img {
+      max-height: 18px;
+      width: auto;
+      display: inline-block;
+      margin-bottom: -3px;
+    }
+
+
+
+    @media screen and (min-width: 1000px) {
+      .distill-site-header .logo img {
+        display: inline-block;
+      }
+      .distill-site-header .nav-left {
+        margin-left: 20px;
+      }
+      .distill-site-header .nav-right {
+        margin-right: 20px;
+      }
+      .distill-site-header .title {
+        padding-left: 12px;
+      }
+    }
+
+
+    .distill-site-header .nav-toggle {
+      display: none;
+    }
+
+    .nav-dropdown {
+      display: inline-block;
+      position: relative;
+    }
+
+    .nav-dropdown .nav-dropbtn {
+      border: none;
+      outline: none;
+      color: rgba(255, 255, 255, 0.8);
+      padding: 16px 10px;
+      background-color: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      margin: 0;
+      margin-top: 1px;
+      z-index: 2;
+    }
+
+    .nav-dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 4px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+      z-index: 1;
+      margin-top: 2px;
+      white-space: nowrap;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .nav-dropdown-content hr {
+      margin-top: 4px;
+      margin-bottom: 4px;
+      border: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-dropdown-active {
+      display: block;
+    }
+
+    .nav-dropdown-content a, .nav-dropdown-content .nav-dropdown-header {
+      color: black;
+      padding: 6px 24px;
+      text-decoration: none;
+      display: block;
+      text-align: left;
+    }
+
+    .nav-dropdown-content .nav-dropdown-header {
+      display: block;
+      padding: 5px 24px;
+      padding-bottom: 0;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #999999;
+      white-space: nowrap;
+    }
+
+    .nav-dropdown:hover .nav-dropbtn {
+      color: white;
+    }
+
+    .nav-dropdown-content a:hover {
+      background-color: #ddd;
+      color: black;
+    }
+
+    .nav-right .nav-dropdown-content {
+      margin-left: -45%;
+      right: 0;
+    }
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header a, .distill-site-header .nav-dropdown  {display: none;}
+      .distill-site-header a.nav-toggle {
+        float: right;
+        display: block;
+      }
+      .distill-site-header .title {
+        margin-left: 0;
+      }
+      .distill-site-header .nav-right {
+        margin-right: 0;
+      }
+      .distill-site-header {
+        overflow: hidden;
+      }
+      .nav-right .nav-dropdown-content {
+        margin-left: 0;
+      }
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header.responsive {position: relative; min-height: 500px; }
+      .distill-site-header.responsive a.nav-toggle {
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+      .distill-site-header.responsive a,
+      .distill-site-header.responsive .nav-dropdown {
+        display: block;
+        text-align: left;
+      }
+      .distill-site-header.responsive .nav-left,
+      .distill-site-header.responsive .nav-right {
+        width: 100%;
+      }
+      .distill-site-header.responsive .nav-dropdown {float: none;}
+      .distill-site-header.responsive .nav-dropdown-content {position: relative;}
+      .distill-site-header.responsive .nav-dropdown .nav-dropbtn {
+        display: block;
+        width: 100%;
+        text-align: left;
+      }
+    }
+
+    /* Site Footer */
+
+    .distill-site-footer {
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+      z-index: 3;
+      margin-top: 30px;
+      padding-top: 30px;
+      padding-bottom: 30px;
+      text-align: center;
+    }
+
+    /* Headroom */
+
+    d-title {
+      padding-top: 6rem;
+    }
+
+    @media print {
+      d-title {
+        padding-top: 4rem;
+      }
+    }
+
+    .headroom {
+      z-index: 1000;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .headroom--transition {
+      transition: all .4s ease-in-out;
+    }
+
+    .headroom--unpinned {
+      top: -100px;
+    }
+
+    .headroom--pinned {
+      top: 0;
+    }
+
+    /* adjust viewport for navbar height */
+    /* helps vertically center bootstrap (non-distill) content */
+    .min-vh-100 {
+      min-height: calc(100vh - 100px) !important;
+    }
+
+    </style>
+
+    <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+    <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
+    <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+    <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
+    <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
+    <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
+
+    <script type="application/javascript">
+
+    function getMeta(metaName) {
+      var metas = document.getElementsByTagName('meta');
+      for (let i = 0; i < metas.length; i++) {
+        if (metas[i].getAttribute('name') === metaName) {
+          return metas[i].getAttribute('content');
+        }
+      }
+      return '';
+    }
+
+    function offsetURL(url) {
+      var offset = getMeta('distill:offset');
+      return offset ? offset + '/' + url : url;
+    }
+
+    function createFuseIndex() {
+
+      // create fuse index
+      var options = {
+        keys: [
+          { name: 'title', weight: 20 },
+          { name: 'categories', weight: 15 },
+          { name: 'description', weight: 10 },
+          { name: 'contents', weight: 5 },
+        ],
+        ignoreLocation: true,
+        threshold: 0
+      };
+      var fuse = new window.Fuse([], options);
+
+      // fetch the main search.json
+      return fetch(offsetURL('search.json'))
+        .then(function(response) {
+          if (response.status == 200) {
+            return response.json().then(function(json) {
+              // index main articles
+              json.articles.forEach(function(article) {
+                fuse.add(article);
+              });
+              // download collections and index their articles
+              return Promise.all(json.collections.map(function(collection) {
+                return fetch(offsetURL(collection)).then(function(response) {
+                  if (response.status === 200) {
+                    return response.json().then(function(articles) {
+                      articles.forEach(function(article) {
+                        fuse.add(article);
+                      });
+                    })
+                  } else {
+                    return Promise.reject(
+                      new Error('Unexpected status from search index request: ' +
+                                response.status)
+                    );
+                  }
+                });
+              })).then(function() {
+                return fuse;
+              });
+            });
+
+          } else {
+            return Promise.reject(
+              new Error('Unexpected status from search index request: ' +
+                          response.status)
+            );
+          }
+        });
+    }
+
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+
+      // get search element (bail if we don't have one)
+      var searchEl = window.document.getElementById('distill-search');
+      if (!searchEl)
+        return;
+
+      createFuseIndex()
+        .then(function(fuse) {
+
+          // make search box visible
+          searchEl.classList.remove('hidden');
+
+          // initialize autocomplete
+          var options = {
+            autoselect: true,
+            hint: false,
+            minLength: 2,
+          };
+          window.autocomplete(searchEl, options, [{
+            source: function(query, callback) {
+              const searchOptions = {
+                isCaseSensitive: false,
+                shouldSort: true,
+                minMatchCharLength: 2,
+                limit: 10,
+              };
+              var results = fuse.search(query, searchOptions);
+              callback(results
+                .map(function(result) { return result.item; })
+              );
+            },
+            templates: {
+              suggestion: function(suggestion) {
+                var img = suggestion.preview && Object.keys(suggestion.preview).length > 0
+                  ? `<img src="${offsetURL(suggestion.preview)}"</img>`
+                  : '';
+                var html = `
+                  <div class="search-item">
+                    <h3>${suggestion.title}</h3>
+                    <div class="search-item-description">
+                      ${suggestion.description || ''}
+                    </div>
+                    <div class="search-item-preview">
+                      ${img}
+                    </div>
+                  </div>
+                `;
+                return html;
+              }
+            }
+          }]).on('autocomplete:selected', function(event, suggestion) {
+            window.location.href = offsetURL(suggestion.path);
+          });
+          // remove inline display style on autocompleter (we want to
+          // manage responsive display via css)
+          $('.algolia-autocomplete').css("display", "");
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+
+    });
+
+    </script>
+
+    <style type="text/css">
+
+    .nav-search {
+      font-size: x-small;
+    }
+
+    /* Algolioa Autocomplete */
+
+    .algolia-autocomplete {
+      display: inline-block;
+      margin-left: 10px;
+      vertical-align: sub;
+      background-color: white;
+      color: black;
+      padding: 6px;
+      padding-top: 8px;
+      padding-bottom: 0;
+      border-radius: 6px;
+      border: 1px #0F2E3D solid;
+      width: 180px;
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .distill-site-nav .algolia-autocomplete {
+        display: none;
+        visibility: hidden;
+      }
+      .distill-site-nav.responsive .algolia-autocomplete {
+        display: inline-block;
+        visibility: visible;
+      }
+      .distill-site-nav.responsive .algolia-autocomplete .aa-dropdown-menu {
+        margin-left: 0;
+        width: 400px;
+        max-height: 400px;
+      }
+    }
+
+    .algolia-autocomplete .aa-input, .algolia-autocomplete .aa-hint {
+      width: 90%;
+      outline: none;
+      border: none;
+    }
+
+    .algolia-autocomplete .aa-hint {
+      color: #999;
+    }
+    .algolia-autocomplete .aa-dropdown-menu {
+      width: 550px;
+      max-height: 70vh;
+      overflow-x: visible;
+      overflow-y: scroll;
+      padding: 5px;
+      margin-top: 3px;
+      margin-left: -150px;
+      background-color: #fff;
+      border-radius: 5px;
+      border: 1px solid #999;
+      border-top: none;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion {
+      cursor: pointer;
+      padding: 5px 4px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion:last-of-type {
+      border-bottom: none;
+      margin-bottom: 2px;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item {
+      overflow: hidden;
+      font-size: 0.8em;
+      line-height: 1.4em;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item h3 {
+      font-size: 1rem;
+      margin-block-start: 0;
+      margin-block-end: 5px;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-description {
+      display: inline-block;
+      overflow: hidden;
+      height: 2.8em;
+      width: 80%;
+      margin-right: 4%;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview {
+      display: inline-block;
+      width: 15%;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img {
+      height: 3em;
+      width: auto;
+      display: none;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img[src] {
+      display: initial;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion.aa-cursor {
+      background-color: #eee;
+    }
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion em {
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    </style>
+
+
+    <!--/radix_placeholder_navigation_in_header-->
+    <!--radix_placeholder_site_in_header-->
+    <style type="text/css">
+    .distill-site-nav {
+        background-color: #1D1E1A;
+    }
+
+    </style>
+    <!--/radix_placeholder_site_in_header-->
+    
+    <style type="text/css">
+    body {
+      padding-top: 60px;
+    }
+    </style>
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/countdown-0.3.5/countdown.css" rel="stylesheet" />
+    <script src="libs/countdown-0.3.5/countdown.js"></script>
+    <link rel="stylesheet" href="setup/theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, title-slide
+
+# Creating Models
+## NHS-R Conference 2021
+### Emil Hvitfeldt
+### 2021-11-02
+
+---
+
+<!--radix_placeholder_navigation_before_body-->
+<header class="header header--fixed" role="banner">
+<nav class="distill-site-nav distill-site-header">
+<div class="nav-left">
+<a href="index.html" class="title">NHS tidymodels workshop</a>
+</div>
+<div class="nav-right">
+<a href="index.html">Home</a>
+<div class="nav-dropdown">
+<button class="nav-dropbtn">
+Slides
+ 
+<span class="down-arrow">&#x25BE;</span>
+</button>
+<div class="nav-dropdown-content">
+<a href="1-introduction.html">1: Introduction</a>
+<hr/>
+<a href="2-models.html">2: Models</a>
+<hr/>
+<a href="3-features.html">3: Features</a>
+<hr/>
+<a href="4-resampling.html">4: Resampling</a>
+<hr/>
+<a href="5-tuning.html">5: Tuning</a>
+</div>
+</div>
+<a href="https://github.com/EmilHvitfeldt/nhs-tidymodels-workshop">
+<i class="fab fa-github" aria-hidden="true"></i>
+</a>
+<a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
+</div>
+</nav>
+</header>
+<!--/radix_placeholder_navigation_before_body-->
+<!--radix_placeholder_site_before_body-->
+<!--/radix_placeholder_site_before_body-->
+
+layout: false
+class: inverse, middle, center
+
+
+
+&lt;!--- Packages ---------------------------------------------------------------&gt;
+
+
+
+
+
+
+&lt;!--- Chunk options ----------------------------------------------------------&gt;
+
+
+
+&lt;!--- pkg highlight ----------------------------------------------------------&gt;
+
+&lt;style&gt;
+.pkg {  
+  font-weight: bold;
+  letter-spacing: 0.5pt;
+  color: #866BBF;
+}
+&lt;/style&gt;
+
+&lt;!--- Highlighing colors -----------------------------------------------------&gt;
+
+
+
+&lt;div style = "position:fixed; visibility: hidden"&gt;
+`$$\require{color}\definecolor{purple}{rgb}{0.525490196078431, 0.419607843137255, 0.749019607843137}$$`
+`$$\require{color}\definecolor{green}{rgb}{0.0117647058823529, 0.650980392156863, 0.415686274509804}$$`
+`$$\require{color}\definecolor{orange}{rgb}{0.949019607843137, 0.580392156862745, 0.254901960784314}$$`
+`$$\require{color}\definecolor{white}{rgb}{1, 1, 1}$$`
+&lt;/div&gt;
+
+&lt;script type="text/x-mathjax-config"&gt;
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      purple: ["{\\color{purple}{#1}}", 1],
+      green: ["{\\color{green}{#1}}", 1],
+      orange: ["{\\color{orange}{#1}}", 1],
+      white: ["{\\color{white}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+&lt;/script&gt;
+
+&lt;style&gt;
+.purple {color: #866BBF;}
+.green {color: #03A66A;}
+.orange {color: #F29441;}
+.white {color: #FFFFFF;}
+&lt;/style&gt;
+
+
+
+
+&lt;!--- knitr hooks ------------------------------------------------------------&gt;
+
+
+
+# [`tidymodels.org`](https://www.tidymodels.org/)
+
+# _Tidy Modeling with R_ ([`tmwr.org`](https://www.tmwr.org/))
+
+---
+
+# Define the score of "The Model" 
+
+In tidymodels, there is the idea that a model-oriented data analysis consists of
+
+ - a preprocessor, and 
+ - a model
+ 
+The preprocessor might be a simple formula or a sophisticated recipe.  
+
+It's important to consider both of these activities as part of the data analysis process.
+
+ - Post-model activities should also be included there (e.g. calibration, cut-off optimization, etc.)
+ - We don't have those implemented yet. 
+
+---
+
+# Basic tidymodels components
+
+&lt;img src="images/blocks.png" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# A relevant example
+
+Let's say that we have some highly correlated predictors and we want to reduce the correlation by first applying principal component analysis to the data. 
+
+ - AKA principal component regression
+ 
+---
+
+# A relevant example
+
+Let's say that we have some highly correlated predictors and we want to reduce the correlation by first applying principal component analysis to the data. 
+
+ - AKA ~~principal component regression~~ feature extraction
+
+---
+
+# A relevant example
+
+Let's say that we have some highly correlated predictors and we want to reduce the correlation by first applying principal component analysis to the data. 
+
+ - AKA ~~principal component regression~~ feature extraction
+
+What do we consider the estimation part of this process? 
+
+---
+
+# Is it this? 
+
+&lt;img src="images/faux-model.svg" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Or is it this? 
+
+&lt;img src="images/the-model.svg" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# What's the difference?
+
+It is easy to think that the model fit is the only estimation steps. 
+
+There are cases where this could go really wrong: 
+
+* Poor estimation of performance (buy treating the PCA parts as known)
+
+
+* Selection bias in feature selection
+
+
+* Information/data leakage
+
+These problems are exacerbated as the preprocessors increase in complexity and/or effectiveness. 
+
+_We'll come back to this at the end of this section_
+
+---
+
+class: inverse, middle, center
+
+&lt;div style="font-size: 110pt;"&gt;
+.orange[Data splitting]
+&lt;/div&gt;
+
+---
+
+class: inverse, middle, center
+
+&lt;div style="font-size: 50pt;"&gt;
+.white[Always have a separate piece of data that can] .purple[contradict] .white[what you] .green[believe]
+&lt;/div&gt;
+
+---
+
+# Data splitting and spending
+
+How do we "spend" the data to find an optimal model? 
+
+We _typically_ split data into training and test data sets:
+
+*  ***Training Set***: these data are used to estimate model parameters and to pick the values of the complexity parameter(s) for the model.
+
+
+*  ***Test Set***: these data can be used to get an independent assessment of model efficacy. **They should not be used during model training** (like, at all). 
+
+---
+
+# Data splitting and spending 
+
+The more data we spend, the better estimates we'll get (provided the data is accurate).  
+
+Given a fixed amount of data:
+
+* Too much spent in training won't allow us to get a good assessment of predictive performance.  We may find a model that fits the training data very well, but is not generalizable (overfitting)
+
+
+* Too much spent in testing won't allow us to get a good assessment of model parameters
+
+Statistically, the best course of action would be to use all the data for model building and use statistical methods to get good estimates of error.
+
+From a non-statistical perspective, many consumers of complex models emphasize the need for an untouched set of samples to evaluate performance.
+
+---
+
+# Mechanics of data splitting
+
+There are a few different ways to do the split: simple random sampling, _stratified sampling based on the outcome_, by date, or methods that focus on the distribution of the predictors.
+
+For stratification:
+
+* **classification**: this would mean sampling within the classes to preserve the distribution of the outcome in the training and test sets
+
+
+* **regression**: determine the quartiles of the data set and sample within those artificial groups
+
+For _time series_, we often use the most recent data as the test set. 
+
+---
+
+# Splitting with Chicago data
+
+`initial_split()` can be used when we use randomness to make the split.
+
+Let's put the last two weeks of data into the test set. `initial_time_split()` can be used for this purpose:
+
+
+```r
+set.seed(1234)
+chi_split &lt;- initial_time_split(Chicago, prop = 1 - (14/nrow(Chicago)))
+chi_split
+```
+
+```
+## &lt;Analysis/Assess/Total&gt;
+## &lt;5684/14/5698&gt;
+```
+
+```r
+chi_train &lt;- training(chi_split)
+chi_test  &lt;- testing(chi_split)
+
+c(training = nrow(chi_train), testing = nrow(chi_test))
+```
+
+```
+## training  testing 
+##     5684       14
+```
+
+---
+
+class: inverse, middle, center
+
+&lt;div style="font-size: 80pt;"&gt;
+.orange[Creating models in R]
+&lt;/div&gt;
+
+---
+
+# Specifying models in R using formulas
+
+To fit a model to the housing data, the model terms must be specified. Historically, there are two main interfaces for doing this. 
+
+The **formula** interface using R [formula rules](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Formulae-for-statistical-models) to specify a _symbolic_ representation of the terms:
+
+Variables + interactions
+
+
+```r
+# day_of_week is not in the data set but day_of_week = lubridate::wday(date, label = TRUE)
+model_fn(ridership ~ day_of_week + Western + day_of_week:Western, data = chi_train)
+```
+
+Shorthand for all predictors
+
+
+```r
+model_fn(ridership ~ ., data = chi_train)
+```
+
+Inline functions / transformations
+
+
+```r
+model_fn(log10(ridership) ~ ns(Western, df = 3) + ., data = chi_train)
+```
+
+---
+
+# Downsides to formulas
+
+* You can't nest in-line functions such as `model_fn(y ~ pca(scale(x1), scale(x2), scale(x3)), data = dat)`.
+* All the model matrix calculations happen at once and can't be recycled when used in a model function. 
+* For very _wide_ data sets, the formula method can be [extremely inefficient](https://rviews.rstudio.com/2017/03/01/the-r-formula-method-the-bad-parts/). 
+* There are limited _roles_ that variables can take which has led to several re-implementations of formulas. 
+* Specifying multivariate outcomes is clunky and inelegant.
+* Not all modeling functions have a formula method (consistency!). 
+
+---
+
+# Specifying models without formulas
+
+Some modeling function have a non-formula (XY) interface. This usually has arguments for the predictors and the outcome(s):
+
+
+```r
+# Usually, the variables must all be numeric
+pre_vars &lt;- c("Austin", "Clark_Lake", "California")
+model_fn(x = chi_train[, pre_vars],
+         y = chi_train$ridership)
+```
+
+This is inconvenient if you have transformations, factor variables, interactions, or any other operations to apply to the data prior to modeling. 
+
+Overall, it is difficult to predict if a package has one or both of these interfaces. For example, `lm` only has formulas. 
+
+There is a **third interface**, using _recipes_ that will be discussed later that solves some of these issues. 
+
+---
+
+# A linear regression model 
+
+Let's start by fitting an ordinary linear regression model to the training set. You can choose the model terms for your model, but I will use a very simple model:
+
+
+```r
+simple_lm &lt;- lm(ridership ~ Clark_Lake + humidity, data = chi_train)
+```
+
+Before looking at coefficients, we should do some model checking to see if there is anything obviously wrong with the model. 
+
+To get the statistics on the individual data points, we will use the awesome `broom` package:
+
+
+```r
+simple_lm_values &lt;- augment(simple_lm)
+names(simple_lm_values)
+```
+
+```
+## [1] "ridership"  "Clark_Lake" "humidity"   ".fitted"    ".resid"    
+## [6] ".hat"       ".sigma"     ".cooksd"    ".std.resid"
+```
+
+---
+
+class: inverse, middle, center
+
+&lt;div style="font-size: 110pt;"&gt;
+.orange[Fitting via tidymodels]
+&lt;/div&gt;
+
+---
+
+# The parsnip package
+
+.pull-left[
+
+- A tidy unified _interface_ to models
+- `lm()` isn't the only way to perform linear regression
+  - .pkg[glmnet] for regularized regression
+  - .pkg[stan] for Bayesian regression
+  - .pkg[keras] for regression using tensorflow
+- But...remember the consistency slide?
+  - Each interface has its own minutiae to remember
+  - .pkg[parsnip] standardizes all that!
+]
+.pull-right[
+
+&lt;img src="images/all_the_models.jpeg" width="700px" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+# parsnip in action
+
+.pull-left[
+
+1) Create specification
+
+2) Set the engine
+
+3) Fit the model
+
+
+```r
+spec_lin_reg &lt;- linear_reg()
+spec_lin_reg
+```
+
+```
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+
+```r
+spec_lm &lt;- spec_lin_reg %&gt;% set_engine("lm")
+spec_lm
+```
+
+```
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+
+]
+
+.pull-right[
+
+
+```r
+fit_lm &lt;- fit(
+  spec_lm,
+  ridership ~ Clark_Lake + humidity,
+  data = chi_train
+)
+
+fit_lm
+```
+
+```
+## parsnip model object
+## 
+## Fit time:  4ms 
+## 
+## Call:
+## stats::lm(formula = ridership ~ Clark_Lake + humidity, data = data)
+## 
+## Coefficients:
+## (Intercept)   Clark_Lake     humidity  
+##    1.764496     0.883693    -0.002497
+```
+
+Note: Models have default engines. We don't really need to use `set_engine("lm")` for this example. 
+
+]
+
+---
+
+# Alternative engines
+
+With .pkg[parsnip], it is easy to switch to a different engine, like Stan, to run the
+same model with alternative backends.
+
+.pull-left[
+
+
+```r
+spec_stan &lt;- 
+  spec_lin_reg %&gt;%
+  # Engine specific arguments are 
+  # passed through here
+  set_engine("stan", chains = 4, iter = 1000)
+
+# Otherwise, looks exactly the same!
+fit_stan &lt;- fit(
+  spec_stan,
+  ridership ~ Clark_Lake + humidity,
+  data = chi_train
+)
+```
+
+]
+
+.pull-right[
+
+
+```r
+coef(fit_stan$fit)
+```
+
+```
+## (Intercept)  Clark_Lake    humidity 
+##  1.76242135  0.88364918 -0.00241108
+```
+
+```r
+coef(fit_lm$fit)
+```
+
+```
+##  (Intercept)   Clark_Lake     humidity 
+##  1.764495522  0.883692888 -0.002497053
+```
+
+]
+
+---
+
+# Duplicate computations
+
+Note that, for both of these fits, some of the computations are repeated. 
+
+For example, the formula method does a fair amount of work to figure out how to turn the data frame into a matrix of predictors. 
+
+When there are special effects (e.g. splines), dummy variables, interactions, or other components, the formula/terms objects have to keep track of everything. 
+
+In cases where there are a lot of _predictors_, these computations can consume a lot of resources. If we can save them, that would be helpful. 
+
+The answer is a _workflow_ object. These bundle together a preprocessor (such as a formula) along with a model. 
+
+---
+
+# A modeling _workflow_ 
+
+We can _optionally_ bundle the recipe and model together into a &lt;span style="color:LightGray;"&gt;&lt;strike&gt;pipeline&lt;/strike&gt;&lt;/span&gt; _workflow_:
+
+
+```r
+reg_wflow &lt;- 
+  workflow() %&gt;%    # attached with the tidymodels package
+  add_model(spec_lm) %&gt;% 
+  add_formula(ridership ~ Clark_Lake + humidity) # or add_recipe() or add_variables()
+
+reg_fit &lt;- fit(reg_wflow, data = chi_train)
+reg_fit
+```
+
+```
+## ══ Workflow [trained] ════════════════════════════════════════════════════════
+## Preprocessor: Formula
+## Model: linear_reg()
+## 
+## ── Preprocessor ──────────────────────────────────────────────────────────────
+## ridership ~ Clark_Lake + humidity
+## 
+## ── Model ─────────────────────────────────────────────────────────────────────
+## 
+## Call:
+## stats::lm(formula = ..y ~ ., data = data)
+## 
+## Coefficients:
+## (Intercept)   Clark_Lake     humidity  
+##    1.764496     0.883693    -0.002497
+```
+
+---
+
+# Swapping models
+
+
+```r
+stan_wflow &lt;- 
+  reg_wflow %&gt;% 
+  update_model(spec_stan)
+
+set.seed(21)
+stan_fit &lt;- fit(stan_wflow, data = chi_train)
+stan_fit
+```
+
+```
+## ══ Workflow [trained] ════════════════════════════════════════════════════════
+## Preprocessor: Formula
+## Model: linear_reg()
+## 
+## ── Preprocessor ──────────────────────────────────────────────────────────────
+## ridership ~ Clark_Lake + humidity
+## 
+## ── Model ─────────────────────────────────────────────────────────────────────
+## stan_glm
+##  family:       gaussian [identity]
+##  formula:      ..y ~ .
+##  observations: 5684
+##  predictors:   3
+## ------
+##             Median MAD_SD
+## (Intercept) 1.8    0.2   
+## Clark_Lake  0.9    0.0   
+## humidity    0.0    0.0   
+## 
+## Auxiliary parameter(s):
+##       Median MAD_SD
+## sigma 3.1    0.0   
+## 
+## ------
+## * For help interpreting the printed output see ?print.stanreg
+## * For info on the priors used see ?prior_summary.stanreg
+```
+
+---
+
+# Workflows
+
+Once the first model is fit, the preprocessor (i.e. the formula) is processed and the model matrix is formed. 
+
+New models don't need to repeat those computations. 
+
+Some other nice features: 
+
+* Workflows are smarter with data than `model.matrix()` in terms of new factor levels. 
+* Other preprocessors can be used: recipes and `dplyr::select()` statements (that do no data processing).
+* As will be seen later, they can help organize your work when a sequence of models are used. 
+* A workflow captures the entire modeling process (mentioned earlier) and a simple `fit()` and `predict()` sequence are used for all of the estimation parts. 
+
+---
+
+# Using workflows to predict
+
+
+```r
+# generate some bogus data (instead of using the training or test sets)
+set.seed(3)
+shuffled_data &lt;- map_dfc(Chicago, ~ sample(.x, size = 10))
+
+predict(stan_fit, shuffled_data) %&gt;% slice(1:3)
+```
+
+```
+## # A tibble: 3 × 1
+##   .pred
+##   &lt;dbl&gt;
+## 1  15.9
+## 2  18.5
+## 3  17.4
+```
+
+```r
+predict(stan_fit, shuffled_data, type = "pred_int") %&gt;% slice(1:3)
+```
+
+```
+## # A tibble: 3 × 2
+##   .pred_lower .pred_upper
+##         &lt;dbl&gt;       &lt;dbl&gt;
+## 1        10.2        22.0
+## 2        12.6        24.6
+## 3        11.3        23.4
+```
+
+---
+
+# The tidymodels prediction guarantee!
+
+
+* The predictions will always be inside a **tibble**.
+* The column names and types are **unsurprising**.
+* The number of rows in `new_data` and the output **are the same**. 
+
+This enables the use of `bind_cols()` to combine the original data and the predictions. 
+
+---
+
+# Evaluating models
+
+tidymodels has a [lot of performance metrics](https://yardstick.tidymodels.org/reference/index.html) for different types of models (e.g. binary classification, etc). 
+
+Each takes a tibble as an input along with the observed and predicted column names: 
+
+
+```r
+pred_results &lt;- 
+  predict(stan_fit, shuffled_data) %&gt;% 
+  bind_cols(shuffled_data)
+
+# Data was randomized; these results should be bad
+pred_results %&gt;% rmse(truth = ridership, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        6.17
+```
+
+---
+
+# Multiple metrics/KPIs
+
+A _metric set_ can bundle multiple statistics: 
+
+
+```r
+reg_metrics &lt;- metric_set(rmse, rsq, mae, ccc)
+
+# A tidy format of the results
+pred_results %&gt;% reg_metrics(truth = ridership, estimate = .pred)
+```
+
+```
+## # A tibble: 4 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard       6.17 
+## 2 rsq     standard       0.304
+## 3 mae     standard       4.36 
+## 4 ccc     standard       0.434
+```
+
+---
+
+# broom methods
+
+.pkg[parsnip] and .pkg[workflow] fits have corresponding .pkg[broom] tidiers: 
+
+
+```r
+glance(reg_fit)
+```
+
+```
+## # A tibble: 1 × 12
+##   r.squared adj.r.squared sigma statistic p.value    df  logLik    AIC    BIC
+##       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1     0.780         0.780  3.07    10094.       0     2 -14448. 28905. 28931.
+## # … with 3 more variables: deviance &lt;dbl&gt;, df.residual &lt;int&gt;, nobs &lt;int&gt;
+```
+
+```r
+tidy(reg_fit)
+```
+
+```
+## # A tibble: 3 × 5
+##   term        estimate std.error statistic  p.value
+##   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 (Intercept)  1.76      0.222       7.94  2.46e-15
+## 2 Clark_Lake   0.884     0.00622   142.    0       
+## 3 humidity    -0.00250   0.00295    -0.847 3.97e- 1
+```
+
+---
+
+# broom methods
+
+For `augment()` we require the data to predict and attach
+
+
+```r
+augment(reg_fit, shuffled_data %&gt;% select(Clark_Lake, humidity, ridership))
+```
+
+```
+## # A tibble: 10 × 4
+##    Clark_Lake humidity ridership .pred
+##         &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1      16.3      78        6.36 15.9 
+##  2      19.2      70       19.3  18.5 
+##  3      17.8      45       15.7  17.4 
+##  4      19.9      50        4.31 19.3 
+##  5      18.7      61       18.7  18.1 
+##  6       2.13     54.5      8.44  3.51
+##  7       4.56     43        1.74  5.69
+##  8      17.1      77.5     14.7  16.6 
+##  9      19.4      59       14.6  18.7 
+## 10      16.7      39       15.3  16.5
+```
+
+---
+
+# Hands-On: Fit a model
+
+Go to the lab and try to fit some models. The labs include the skeleton. Try to mix it up with different predictors or models.
+
+<div class="countdown" id="timer_617fa116" style="right:0;bottom:0;" data-warnwhen="0">
+<code class="countdown-time"><span class="countdown-digits minutes">10</span><span class="countdown-digits colon">:</span><span class="countdown-digits seconds">00</span></code>
+</div>
+    </textarea>
+<!--radix_placeholder_site_after_body-->
+<!--/radix_placeholder_site_after_body-->
+<!--radix_placeholder_navigation_after_body-->
+<!--/radix_placeholder_navigation_after_body-->
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="setup/macros.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "arta",
+"highlightLanguage": ["r", "css", "yaml"],
+"highlightLines": false,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

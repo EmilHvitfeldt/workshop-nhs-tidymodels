@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Feature engineering</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Emil Hvitfeldt" />
+    <meta name="date" content="2021-11-02" />
+    <!--radix_placeholder_navigation_in_header-->
+    <meta name="distill:offset" content=""/>
+
+    <script type="application/javascript">
+
+      window.headroom_prevent_pin = false;
+
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+
+        // initialize headroom for banner
+        var header = $('header').get(0);
+        var headerHeight = header.offsetHeight;
+        var headroom = new Headroom(header, {
+          tolerance: 5,
+          onPin : function() {
+            if (window.headroom_prevent_pin) {
+              window.headroom_prevent_pin = false;
+              headroom.unpin();
+            }
+          }
+        });
+        headroom.init();
+        if(window.location.hash)
+          headroom.unpin();
+        $(header).addClass('headroom--transition');
+
+        // offset scroll location for banner on hash change
+        // (see: https://github.com/WickyNilliams/headroom.js/issues/38)
+        window.addEventListener("hashchange", function(event) {
+          window.scrollTo(0, window.pageYOffset - (headerHeight + 25));
+        });
+
+        // responsive menu
+        $('.distill-site-header').each(function(i, val) {
+          var topnav = $(this);
+          var toggle = topnav.find('.nav-toggle');
+          toggle.on('click', function() {
+            topnav.toggleClass('responsive');
+          });
+        });
+
+        // nav dropdowns
+        $('.nav-dropbtn').click(function(e) {
+          $(this).next('.nav-dropdown-content').toggleClass('nav-dropdown-active');
+          $(this).parent().siblings('.nav-dropdown')
+             .children('.nav-dropdown-content').removeClass('nav-dropdown-active');
+        });
+        $("body").click(function(e){
+          $('.nav-dropdown-content').removeClass('nav-dropdown-active');
+        });
+        $(".nav-dropdown").click(function(e){
+          e.stopPropagation();
+        });
+      });
+    </script>
+
+    <style type="text/css">
+
+    /* Theme (user-documented overrideables for nav appearance) */
+
+    .distill-site-nav {
+      color: rgba(255, 255, 255, 0.8);
+      background-color: #0F2E3D;
+      font-size: 15px;
+      font-weight: 300;
+    }
+
+    .distill-site-nav a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .distill-site-nav a:hover {
+      color: white;
+    }
+
+    @media print {
+      .distill-site-nav {
+        display: none;
+      }
+    }
+
+    .distill-site-header {
+
+    }
+
+    .distill-site-footer {
+
+    }
+
+
+    /* Site Header */
+
+    .distill-site-header {
+      width: 100%;
+      box-sizing: border-box;
+      z-index: 3;
+    }
+
+    .distill-site-header .nav-left {
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header .nav-left {
+        margin-left: 0;
+      }
+    }
+
+
+    .distill-site-header .nav-right {
+      float: right;
+      margin-right: 8px;
+    }
+
+    .distill-site-header a,
+    .distill-site-header .title {
+      display: inline-block;
+      text-align: center;
+      padding: 14px 10px 14px 10px;
+    }
+
+    .distill-site-header .title {
+      font-size: 18px;
+      min-width: 150px;
+    }
+
+    .distill-site-header .logo {
+      padding: 0;
+    }
+
+    .distill-site-header .logo img {
+      display: none;
+      max-height: 20px;
+      width: auto;
+      margin-bottom: -4px;
+    }
+
+    .distill-site-header .nav-image img {
+      max-height: 18px;
+      width: auto;
+      display: inline-block;
+      margin-bottom: -3px;
+    }
+
+
+
+    @media screen and (min-width: 1000px) {
+      .distill-site-header .logo img {
+        display: inline-block;
+      }
+      .distill-site-header .nav-left {
+        margin-left: 20px;
+      }
+      .distill-site-header .nav-right {
+        margin-right: 20px;
+      }
+      .distill-site-header .title {
+        padding-left: 12px;
+      }
+    }
+
+
+    .distill-site-header .nav-toggle {
+      display: none;
+    }
+
+    .nav-dropdown {
+      display: inline-block;
+      position: relative;
+    }
+
+    .nav-dropdown .nav-dropbtn {
+      border: none;
+      outline: none;
+      color: rgba(255, 255, 255, 0.8);
+      padding: 16px 10px;
+      background-color: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      margin: 0;
+      margin-top: 1px;
+      z-index: 2;
+    }
+
+    .nav-dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 4px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+      z-index: 1;
+      margin-top: 2px;
+      white-space: nowrap;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .nav-dropdown-content hr {
+      margin-top: 4px;
+      margin-bottom: 4px;
+      border: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-dropdown-active {
+      display: block;
+    }
+
+    .nav-dropdown-content a, .nav-dropdown-content .nav-dropdown-header {
+      color: black;
+      padding: 6px 24px;
+      text-decoration: none;
+      display: block;
+      text-align: left;
+    }
+
+    .nav-dropdown-content .nav-dropdown-header {
+      display: block;
+      padding: 5px 24px;
+      padding-bottom: 0;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #999999;
+      white-space: nowrap;
+    }
+
+    .nav-dropdown:hover .nav-dropbtn {
+      color: white;
+    }
+
+    .nav-dropdown-content a:hover {
+      background-color: #ddd;
+      color: black;
+    }
+
+    .nav-right .nav-dropdown-content {
+      margin-left: -45%;
+      right: 0;
+    }
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header a, .distill-site-header .nav-dropdown  {display: none;}
+      .distill-site-header a.nav-toggle {
+        float: right;
+        display: block;
+      }
+      .distill-site-header .title {
+        margin-left: 0;
+      }
+      .distill-site-header .nav-right {
+        margin-right: 0;
+      }
+      .distill-site-header {
+        overflow: hidden;
+      }
+      .nav-right .nav-dropdown-content {
+        margin-left: 0;
+      }
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header.responsive {position: relative; min-height: 500px; }
+      .distill-site-header.responsive a.nav-toggle {
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+      .distill-site-header.responsive a,
+      .distill-site-header.responsive .nav-dropdown {
+        display: block;
+        text-align: left;
+      }
+      .distill-site-header.responsive .nav-left,
+      .distill-site-header.responsive .nav-right {
+        width: 100%;
+      }
+      .distill-site-header.responsive .nav-dropdown {float: none;}
+      .distill-site-header.responsive .nav-dropdown-content {position: relative;}
+      .distill-site-header.responsive .nav-dropdown .nav-dropbtn {
+        display: block;
+        width: 100%;
+        text-align: left;
+      }
+    }
+
+    /* Site Footer */
+
+    .distill-site-footer {
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+      z-index: 3;
+      margin-top: 30px;
+      padding-top: 30px;
+      padding-bottom: 30px;
+      text-align: center;
+    }
+
+    /* Headroom */
+
+    d-title {
+      padding-top: 6rem;
+    }
+
+    @media print {
+      d-title {
+        padding-top: 4rem;
+      }
+    }
+
+    .headroom {
+      z-index: 1000;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .headroom--transition {
+      transition: all .4s ease-in-out;
+    }
+
+    .headroom--unpinned {
+      top: -100px;
+    }
+
+    .headroom--pinned {
+      top: 0;
+    }
+
+    /* adjust viewport for navbar height */
+    /* helps vertically center bootstrap (non-distill) content */
+    .min-vh-100 {
+      min-height: calc(100vh - 100px) !important;
+    }
+
+    </style>
+
+    <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+    <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
+    <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+    <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
+    <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
+    <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
+
+    <script type="application/javascript">
+
+    function getMeta(metaName) {
+      var metas = document.getElementsByTagName('meta');
+      for (let i = 0; i < metas.length; i++) {
+        if (metas[i].getAttribute('name') === metaName) {
+          return metas[i].getAttribute('content');
+        }
+      }
+      return '';
+    }
+
+    function offsetURL(url) {
+      var offset = getMeta('distill:offset');
+      return offset ? offset + '/' + url : url;
+    }
+
+    function createFuseIndex() {
+
+      // create fuse index
+      var options = {
+        keys: [
+          { name: 'title', weight: 20 },
+          { name: 'categories', weight: 15 },
+          { name: 'description', weight: 10 },
+          { name: 'contents', weight: 5 },
+        ],
+        ignoreLocation: true,
+        threshold: 0
+      };
+      var fuse = new window.Fuse([], options);
+
+      // fetch the main search.json
+      return fetch(offsetURL('search.json'))
+        .then(function(response) {
+          if (response.status == 200) {
+            return response.json().then(function(json) {
+              // index main articles
+              json.articles.forEach(function(article) {
+                fuse.add(article);
+              });
+              // download collections and index their articles
+              return Promise.all(json.collections.map(function(collection) {
+                return fetch(offsetURL(collection)).then(function(response) {
+                  if (response.status === 200) {
+                    return response.json().then(function(articles) {
+                      articles.forEach(function(article) {
+                        fuse.add(article);
+                      });
+                    })
+                  } else {
+                    return Promise.reject(
+                      new Error('Unexpected status from search index request: ' +
+                                response.status)
+                    );
+                  }
+                });
+              })).then(function() {
+                return fuse;
+              });
+            });
+
+          } else {
+            return Promise.reject(
+              new Error('Unexpected status from search index request: ' +
+                          response.status)
+            );
+          }
+        });
+    }
+
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+
+      // get search element (bail if we don't have one)
+      var searchEl = window.document.getElementById('distill-search');
+      if (!searchEl)
+        return;
+
+      createFuseIndex()
+        .then(function(fuse) {
+
+          // make search box visible
+          searchEl.classList.remove('hidden');
+
+          // initialize autocomplete
+          var options = {
+            autoselect: true,
+            hint: false,
+            minLength: 2,
+          };
+          window.autocomplete(searchEl, options, [{
+            source: function(query, callback) {
+              const searchOptions = {
+                isCaseSensitive: false,
+                shouldSort: true,
+                minMatchCharLength: 2,
+                limit: 10,
+              };
+              var results = fuse.search(query, searchOptions);
+              callback(results
+                .map(function(result) { return result.item; })
+              );
+            },
+            templates: {
+              suggestion: function(suggestion) {
+                var img = suggestion.preview && Object.keys(suggestion.preview).length > 0
+                  ? `<img src="${offsetURL(suggestion.preview)}"</img>`
+                  : '';
+                var html = `
+                  <div class="search-item">
+                    <h3>${suggestion.title}</h3>
+                    <div class="search-item-description">
+                      ${suggestion.description || ''}
+                    </div>
+                    <div class="search-item-preview">
+                      ${img}
+                    </div>
+                  </div>
+                `;
+                return html;
+              }
+            }
+          }]).on('autocomplete:selected', function(event, suggestion) {
+            window.location.href = offsetURL(suggestion.path);
+          });
+          // remove inline display style on autocompleter (we want to
+          // manage responsive display via css)
+          $('.algolia-autocomplete').css("display", "");
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+
+    });
+
+    </script>
+
+    <style type="text/css">
+
+    .nav-search {
+      font-size: x-small;
+    }
+
+    /* Algolioa Autocomplete */
+
+    .algolia-autocomplete {
+      display: inline-block;
+      margin-left: 10px;
+      vertical-align: sub;
+      background-color: white;
+      color: black;
+      padding: 6px;
+      padding-top: 8px;
+      padding-bottom: 0;
+      border-radius: 6px;
+      border: 1px #0F2E3D solid;
+      width: 180px;
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .distill-site-nav .algolia-autocomplete {
+        display: none;
+        visibility: hidden;
+      }
+      .distill-site-nav.responsive .algolia-autocomplete {
+        display: inline-block;
+        visibility: visible;
+      }
+      .distill-site-nav.responsive .algolia-autocomplete .aa-dropdown-menu {
+        margin-left: 0;
+        width: 400px;
+        max-height: 400px;
+      }
+    }
+
+    .algolia-autocomplete .aa-input, .algolia-autocomplete .aa-hint {
+      width: 90%;
+      outline: none;
+      border: none;
+    }
+
+    .algolia-autocomplete .aa-hint {
+      color: #999;
+    }
+    .algolia-autocomplete .aa-dropdown-menu {
+      width: 550px;
+      max-height: 70vh;
+      overflow-x: visible;
+      overflow-y: scroll;
+      padding: 5px;
+      margin-top: 3px;
+      margin-left: -150px;
+      background-color: #fff;
+      border-radius: 5px;
+      border: 1px solid #999;
+      border-top: none;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion {
+      cursor: pointer;
+      padding: 5px 4px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion:last-of-type {
+      border-bottom: none;
+      margin-bottom: 2px;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item {
+      overflow: hidden;
+      font-size: 0.8em;
+      line-height: 1.4em;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item h3 {
+      font-size: 1rem;
+      margin-block-start: 0;
+      margin-block-end: 5px;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-description {
+      display: inline-block;
+      overflow: hidden;
+      height: 2.8em;
+      width: 80%;
+      margin-right: 4%;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview {
+      display: inline-block;
+      width: 15%;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img {
+      height: 3em;
+      width: auto;
+      display: none;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img[src] {
+      display: initial;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion.aa-cursor {
+      background-color: #eee;
+    }
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion em {
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    </style>
+
+
+    <!--/radix_placeholder_navigation_in_header-->
+    <!--radix_placeholder_site_in_header-->
+    <style type="text/css">
+    .distill-site-nav {
+        background-color: #1D1E1A;
+    }
+
+    </style>
+    <!--/radix_placeholder_site_in_header-->
+    
+    <style type="text/css">
+    body {
+      padding-top: 60px;
+    }
+    </style>
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/countdown-0.3.5/countdown.css" rel="stylesheet" />
+    <script src="libs/countdown-0.3.5/countdown.js"></script>
+    <link rel="stylesheet" href="setup/theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, title-slide
+
+# Feature engineering
+## NHS-R Conference 2021
+### Emil Hvitfeldt
+### 2021-11-02
+
+---
+
+<!--radix_placeholder_navigation_before_body-->
+<header class="header header--fixed" role="banner">
+<nav class="distill-site-nav distill-site-header">
+<div class="nav-left">
+<a href="index.html" class="title">NHS tidymodels workshop</a>
+</div>
+<div class="nav-right">
+<a href="index.html">Home</a>
+<div class="nav-dropdown">
+<button class="nav-dropbtn">
+Slides
+ 
+<span class="down-arrow">&#x25BE;</span>
+</button>
+<div class="nav-dropdown-content">
+<a href="1-introduction.html">1: Introduction</a>
+<hr/>
+<a href="2-models.html">2: Models</a>
+<hr/>
+<a href="3-features.html">3: Features</a>
+<hr/>
+<a href="4-resampling.html">4: Resampling</a>
+<hr/>
+<a href="5-tuning.html">5: Tuning</a>
+</div>
+</div>
+<a href="https://github.com/EmilHvitfeldt/nhs-tidymodels-workshop">
+<i class="fab fa-github" aria-hidden="true"></i>
+</a>
+<a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
+</div>
+</nav>
+</header>
+<!--/radix_placeholder_navigation_before_body-->
+<!--radix_placeholder_site_before_body-->
+<!--/radix_placeholder_site_before_body-->
+
+class: inverse, middle, center
+
+
+
+&lt;!--- Packages ---------------------------------------------------------------&gt;
+
+
+
+
+
+
+&lt;!--- Chunk options ----------------------------------------------------------&gt;
+
+
+
+&lt;!--- pkg highlight ----------------------------------------------------------&gt;
+
+&lt;style&gt;
+.pkg {  
+  font-weight: bold;
+  letter-spacing: 0.5pt;
+  color: #866BBF;
+}
+&lt;/style&gt;
+
+&lt;!--- Highlighing colors -----------------------------------------------------&gt;
+
+
+
+&lt;div style = "position:fixed; visibility: hidden"&gt;
+`$$\require{color}\definecolor{purple}{rgb}{0.525490196078431, 0.419607843137255, 0.749019607843137}$$`
+`$$\require{color}\definecolor{green}{rgb}{0.0117647058823529, 0.650980392156863, 0.415686274509804}$$`
+`$$\require{color}\definecolor{orange}{rgb}{0.949019607843137, 0.580392156862745, 0.254901960784314}$$`
+`$$\require{color}\definecolor{white}{rgb}{1, 1, 1}$$`
+&lt;/div&gt;
+
+&lt;script type="text/x-mathjax-config"&gt;
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      purple: ["{\\color{purple}{#1}}", 1],
+      green: ["{\\color{green}{#1}}", 1],
+      orange: ["{\\color{orange}{#1}}", 1],
+      white: ["{\\color{white}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+&lt;/script&gt;
+
+&lt;style&gt;
+.purple {color: #866BBF;}
+.green {color: #03A66A;}
+.orange {color: #F29441;}
+.white {color: #FFFFFF;}
+&lt;/style&gt;
+
+
+
+
+&lt;!--- knitr hooks ------------------------------------------------------------&gt;
+
+
+
+
+
+# [`tidymodels.org`](https://www.tidymodels.org/)
+
+# _Tidy Modeling with R_ ([`tmwr.org`](https://www.tmwr.org/))
+
+---
+
+# What is feature engineering?
+
+First thing's first: what's a feature? 
+
+I tend to think of a feature as some representation of a predictor that will be used in a model. 
+
+Old-school features: 
+
+ * Interactions
+ * Polynomial expansions/splines
+ * PCA feature extraction
+ 
+"Feature engineering" sounds pretty cool, but let's take a minute to talk about _preprocessing_ data.  
+
+---
+
+# Two types of preprocessing
+
+&lt;img src="images/fe_venn.svg" width="75%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Two types of preprocessing
+
+&lt;img src="images/fe_venn_info.svg" width="75%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Easy examples
+
+For example, centering and scaling are definitely not feature engineering.
+
+Consider the `date` field in the Chicago data. If given as a raw predictor, it is converted to an integer. 
+
+Spoiler alert: the date is the most important factor. It can be re-encoded as:
+
+* Days since a reference date 😪
+* Day of the week ❤️❤️❤️❤️
+* Month 😪
+* Year ❤️❤️
+* Indicators for holidays ❤️❤️❤️
+* Indicators for home games for NFL, NBA, etc.  😪
+
+---
+
+# General definitions
+
+* _Data preprocessing_ are the steps that you take to make your model successful. 
+
+
+* _Feature engineering_ are what you do to the original predictors to make the model do the least work to predict the outcome as well as possible. 
+
+We'll demonstrate the .pkg[recipes] package for all of your data needs. 
+
+---
+
+# Recipes prepare your data for modeling
+
+The package is extensible framework for pipeable sequences of feature engineering steps provides preprocessing tools to be applied to data. 
+    
+Statistical parameters for the steps can be estimated from an initial data set and then applied to other data sets. 
+    
+The resulting processed output can then be used as inputs for statistical or machine learning models.
+
+---
+
+# A first recipe
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train)
+
+# If ncol(data) is large, you can use
+# recipe(data = chi_train)
+```
+
+Based on the formula, the function assigns columns to roles of "outcome" or "predictor"
+
+
+```r
+summary(chi_rec)
+```
+
+```
+## # A tibble: 50 × 4
+##    variable         type    role      source  
+##    &lt;chr&gt;            &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;   
+##  1 Austin           numeric predictor original
+##  2 Quincy_Wells     numeric predictor original
+##  3 Belmont          numeric predictor original
+##  4 Archer_35th      numeric predictor original
+##  5 Oak_Park         numeric predictor original
+##  6 Western          numeric predictor original
+##  7 Clark_Lake       numeric predictor original
+##  8 Clinton          numeric predictor original
+##  9 Merchandise_Mart numeric predictor original
+## 10 Irving_Park      numeric predictor original
+## # … with 40 more rows
+```
+
+---
+
+# A first recipe - work with dates
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year"))
+```
+
+This creates three new columns in the data based on the date. Now that the day-of-the-week column is a factor.
+
+---
+
+# A first recipe - work with dates
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date)
+```
+
+Add indicators for major holidays. Specific holidays, especially those ex-US, can also be generated. 
+
+At this point, we don't need `date` anymore. Instead of deleting it (there is a step for that) we will change its _role_ to be an identification variable. 
+
+---
+
+# A first recipe - work with dates
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id")
+```
+
+`date` is still in the data set but tidymodels knows not to treat it as an analysis column. 
+
+---
+
+# A first recipe -create indicator variables
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors())
+```
+
+For any factor or character predictors, make binary indicators. 
+
+There are _many_ recipe steps that can convert categorical predictors to numeric columns. 
+
+---
+
+# A first recipe - filter out constant columns
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors())
+```
+
+In case there is a holiday that never was observed, we can delete any _zero-variance_ predictors that have a single unique value.
+
+Note that the selector chooses all columns with a role of "predictor"
+
+---
+
+# A first recipe - normalization
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors())
+```
+
+This centers and scales the numeric predictors. 
+
+Note that this will use the training set to estimate the means and standard deviations of the data. 
+
+All data put through the recipe will be normalized using those statistics (there is no re-estimation). 
+
+---
+
+# A first recipe - reduce correlation
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors()) %&gt;% 
+  step_corr(all_numeric_predictors(), threshold = 0.9)
+```
+
+To deal with highly correlated predicors, find the minimum predictor set to remove to make the pairwise correlations are less than 0.9.
+
+There are other filter steps too, 
+
+---
+
+# Other possible steps
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors()) %&gt;% 
+  step_pca(all_numeric_predictors())
+```
+
+PCA feature extraction...
+
+---
+
+# Other possible steps
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors()) %&gt;% 
+  step_umap(all_numeric_predictors(), outcome = ridership)
+```
+
+A fancy machine learning supervised dimension reduction technique
+
+---
+
+# Other possible steps
+
+
+```r
+chi_rec &lt;- 
+  recipe(ridership ~ ., data = chi_train) %&gt;% 
+  step_date(date, features = c("dow", "month", "year")) %&gt;% 
+  step_holiday(date) %&gt;% 
+  update_role(date, new_role = "id") %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors()) %&gt;% 
+  step_ns(Clark_Lake, deg_free = 10)
+```
+
+Nonlinear transforms like _natural splines_ and so on. 
+
+---
+
+# Recipes are estimated
+
+_Every_ preprocessing step in a recipe that involved calculations uses the _training set_. For example: 
+
+ * Levels of a factor
+ * Determination of zero-variance
+ * Normalization
+ * Feature extraction
+ 
+and so on. 
+
+Once a a recipe is added to a workflow, this occurs when `fit()` is called. 
+
+---
+
+# Recipes follow this strategy
+
+&lt;img src="images/the-model.svg" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Adding recipes to workflows
+
+Let's stick to a linear model for now and add a recipe (instead of a formula):
+
+.pull-left[
+
+
+```r
+lm_spec &lt;- linear_reg() 
+
+chi_wflow &lt;- 
+  workflow() %&gt;% 
+  add_model(lm_spec) %&gt;% 
+  add_recipe(chi_rec)
+
+chi_wflow
+```
+
+]
+
+.pull-right[
+
+
+```
+## ══ Workflow ══════════════════════════════════════════════════════════════════
+## Preprocessor: Recipe
+## Model: linear_reg()
+## 
+## ── Preprocessor ──────────────────────────────────────────────────────────────
+## 6 Recipe Steps
+## 
+## • step_date()
+## • step_holiday()
+## • step_dummy()
+## • step_zv()
+## • step_normalize()
+## • step_corr()
+## 
+## ── Model ─────────────────────────────────────────────────────────────────────
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+
+]
+
+---
+
+# Estimate via `fit()`
+
+Let's stick to a linear model for now and add a recipe (instead of a formula):
+
+
+.pull-left[
+
+
+```r
+chi_fit &lt;- chi_wflow %&gt;% fit(chi_train)
+chi_fit
+```
+
+]
+
+.pull-right[
+
+
+```
+## ══ Workflow [trained] ════════════════════════════════════════════════════════
+## Preprocessor: Recipe
+## Model: linear_reg()
+## 
+## ── Preprocessor ──────────────────────────────────────────────────────────────
+## 6 Recipe Steps
+## 
+## • step_date()
+## • step_holiday()
+## • step_dummy()
+## • step_zv()
+## • step_normalize()
+## • step_corr()
+## 
+## ── Model ─────────────────────────────────────────────────────────────────────
+## 
+## Call:
+## stats::lm(formula = ..y ~ ., data = data)
+## 
+## Coefficients:
+##       (Intercept)   Washington_Wells        temp_change                dew  
+##         13.611685          -0.102278          -0.026406           0.422014  
+##          humidity           pressure    pressure_change               wind  
+##         -0.070948           0.002097           0.032573          -0.120868  
+##          wind_max               gust           gust_max             percip  
+##          0.005030          -0.038944           0.097526          -0.034111  
+##        percip_max       weather_rain       weather_snow      weather_cloud  
+##         -0.030426          -0.127184          -0.127124          -0.087404  
+##     weather_storm    Blackhawks_Away    Blackhawks_Home         Bulls_Away  
+##          0.009117          -0.037365          -0.005315           0.015849  
+##        Bulls_Home         Bears_Away         Bears_Home          Cubs_Home  
+##          0.112938           0.061506           0.055691          -0.259078  
+##         date_year      date_LaborDay   date_NewYearsDay  date_ChristmasDay  
+##          1.743613           0.044648          -0.512929          -0.581508  
+##      date_dow_Mon       date_dow_Tue       date_dow_Wed       date_dow_Thu  
+##          4.475308           4.969280           4.974286           4.901382  
+##      date_dow_Fri       date_dow_Sat     date_month_Feb     date_month_Mar  
+##          4.695743           0.411799           0.116181           0.246738  
+##    date_month_Apr     date_month_May     date_month_Jun     date_month_Jul  
+##          0.346733           0.238892           0.498224           0.331972  
+##    date_month_Aug     date_month_Sep     date_month_Oct     date_month_Nov  
+##          0.401437           0.326200           0.481322           0.127999  
+##    date_month_Dec  
+##         -0.057195
+```
+
+]
+
+---
+
+# Prediction
+
+When `predict()` is called, the fitted recipe is applied to the new data before it is predicted by the model:
+
+
+```r
+predict(chi_fit, chi_test)
+```
+
+```
+## # A tibble: 14 × 1
+##    .pred
+##    &lt;dbl&gt;
+##  1 20.6 
+##  2 21.4 
+##  3 21.7 
+##  4 21.5 
+##  5 20.8 
+##  6  8.41
+##  7  7.39
+##  8 20.2 
+##  9 21.6 
+## 10 21.5 
+## 11 21.2 
+## 12 20.7 
+## 13  8.86
+## 14  7.60
+```
+
+You don't need to do anything else
+
+---
+
+# Tidying a recipe
+
+.pull-left[
+`tidy(recipe)` gives a summary of the steps:
+
+
+```r
+tidy(chi_rec)
+```
+
+```
+## # A tibble: 6 × 6
+##   number operation type      trained skip  id             
+##    &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;     &lt;lgl&gt;   &lt;lgl&gt; &lt;chr&gt;          
+## 1      1 step      date      FALSE   FALSE date_sJxC9     
+## 2      2 step      holiday   FALSE   FALSE holiday_nMzT3  
+## 3      3 step      dummy     FALSE   FALSE dummy_LUPxu    
+## 4      4 step      zv        FALSE   FALSE zv_HsCdL       
+## 5      5 step      normalize FALSE   FALSE normalize_KGE7Q
+## 6      6 step      corr      FALSE   FALSE corr_64q8w
+```
+
+After fitting the recipe, you might want access to the statistics from each step. We can pull the fitted recipe from the workflow and choose which step to tidy by number or `id`
+]
+.pull-right[
+
+
+```r
+chi_fit %&gt;% 
+  extract_recipe() %&gt;% 
+  tidy(number = 5) # For step normalize
+```
+
+```
+## # A tibble: 138 × 4
+##    terms            statistic value id             
+##    &lt;chr&gt;            &lt;chr&gt;     &lt;dbl&gt; &lt;chr&gt;          
+##  1 Austin           mean       1.52 normalize_KGE7Q
+##  2 Quincy_Wells     mean       5.58 normalize_KGE7Q
+##  3 Belmont          mean       4.09 normalize_KGE7Q
+##  4 Archer_35th      mean       2.21 normalize_KGE7Q
+##  5 Oak_Park         mean       1.32 normalize_KGE7Q
+##  6 Western          mean       2.87 normalize_KGE7Q
+##  7 Clark_Lake       mean      13.6  normalize_KGE7Q
+##  8 Clinton          mean       2.44 normalize_KGE7Q
+##  9 Merchandise_Mart mean       4.67 normalize_KGE7Q
+## 10 Irving_Park      mean       3.41 normalize_KGE7Q
+## # … with 128 more rows
+```
+]
+
+---
+
+# Debugging a recipe
+
+90% of the time, you will want to use a workflow to estimate and apply a recipe. 
+
+If you have an error, the original recipe object (e.g. `chi_rec`) can be estimated manually with a function called `bake()` (analogous to `fit()`). 
+
+This returns the fitted recipe. This can help debug any issues. 
+
+Another function (`bake()`) is analogous to `predict()` and gives you the processed data back. 
+
+---
+
+# Fun facts about recipes
+
+* Once `fit()` is called on a workflow, changing the model does not re-fit the recipe. 
+* A list of all known steps is [here](https://www.tidymodels.org/find/recipes/). 
+* Some steps can be [skipped](https://recipes.tidymodels.org/articles/Skipping.html) when using `predict()`. 
+* The [order](https://recipes.tidymodels.org/articles/Ordering.html) of the steps matters. 
+* There are .pkg[recipes]-adjacent packages with more steps: .pkg[embed], .pkg[timetk], .pkg[textrecipes], .pkg[themis], and others. 
+    * Julia and I have written an amazing text processing book: [_Supervised Machine Learning for Text Analysis in R_](https://smltar.com/)
+* There are a lot of ways to handle [categorical predictors](https://recipes.tidymodels.org/articles/Dummies.html) even those with novel levels. 
+* Several .pkg[dplyr] steps exist, such as `step_mutate()`. 
+
+---
+
+# Hands-On: Add a recipe to your model
+
+Go to the lab and add a custom recipe to perform feature engineering.
+
+<div class="countdown" id="timer_617fa2f6" style="right:0;bottom:0;" data-warnwhen="0">
+<code class="countdown-time"><span class="countdown-digits minutes">10</span><span class="countdown-digits colon">:</span><span class="countdown-digits seconds">00</span></code>
+</div>
+    </textarea>
+<!--radix_placeholder_site_after_body-->
+<!--/radix_placeholder_site_after_body-->
+<!--radix_placeholder_navigation_after_body-->
+<!--/radix_placeholder_navigation_after_body-->
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="setup/macros.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "arta",
+"highlightLanguage": ["r", "css", "yaml"],
+"highlightLines": false,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

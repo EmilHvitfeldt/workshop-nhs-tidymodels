@@ -1,0 +1,32 @@
+name: "."
+title: "NHS tidymodels workshop"
+description: |
+  NHS tidymodels workshop
+output_dir: "docs"
+navbar:
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "Slides"
+      menu:
+        - text: "1: Introduction"
+          href: 1-introduction.html
+        - text: "---"
+        - text: "2: Models"
+          href: 2-models.html
+        - text: "---"
+        - text: "3: Features"
+          href: 3-features.html
+        - text: "---"
+        - text: "4: Resampling"
+          href: 4-resampling.html
+        - text: "---"
+        - text: "5: Tuning"
+          href: 5-tuning.html
+    - icon: fab fa-github
+      href: https://github.com/EmilHvitfeldt/nhs-tidymodels-workshop
+creative_commons: CC BY-SA
+repository_url: https://github.com/EmilHvitfeldt/nhs-tidymodels-workshop
+output:
+  distill::distill_article:
+    css: styles.css

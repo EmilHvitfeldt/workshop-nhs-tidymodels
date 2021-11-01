@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Using resampling to estimate performance</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Emil Hvitfeldt" />
+    <meta name="date" content="2021-11-02" />
+    <!--radix_placeholder_navigation_in_header-->
+    <meta name="distill:offset" content=""/>
+
+    <script type="application/javascript">
+
+      window.headroom_prevent_pin = false;
+
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+
+        // initialize headroom for banner
+        var header = $('header').get(0);
+        var headerHeight = header.offsetHeight;
+        var headroom = new Headroom(header, {
+          tolerance: 5,
+          onPin : function() {
+            if (window.headroom_prevent_pin) {
+              window.headroom_prevent_pin = false;
+              headroom.unpin();
+            }
+          }
+        });
+        headroom.init();
+        if(window.location.hash)
+          headroom.unpin();
+        $(header).addClass('headroom--transition');
+
+        // offset scroll location for banner on hash change
+        // (see: https://github.com/WickyNilliams/headroom.js/issues/38)
+        window.addEventListener("hashchange", function(event) {
+          window.scrollTo(0, window.pageYOffset - (headerHeight + 25));
+        });
+
+        // responsive menu
+        $('.distill-site-header').each(function(i, val) {
+          var topnav = $(this);
+          var toggle = topnav.find('.nav-toggle');
+          toggle.on('click', function() {
+            topnav.toggleClass('responsive');
+          });
+        });
+
+        // nav dropdowns
+        $('.nav-dropbtn').click(function(e) {
+          $(this).next('.nav-dropdown-content').toggleClass('nav-dropdown-active');
+          $(this).parent().siblings('.nav-dropdown')
+             .children('.nav-dropdown-content').removeClass('nav-dropdown-active');
+        });
+        $("body").click(function(e){
+          $('.nav-dropdown-content').removeClass('nav-dropdown-active');
+        });
+        $(".nav-dropdown").click(function(e){
+          e.stopPropagation();
+        });
+      });
+    </script>
+
+    <style type="text/css">
+
+    /* Theme (user-documented overrideables for nav appearance) */
+
+    .distill-site-nav {
+      color: rgba(255, 255, 255, 0.8);
+      background-color: #0F2E3D;
+      font-size: 15px;
+      font-weight: 300;
+    }
+
+    .distill-site-nav a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .distill-site-nav a:hover {
+      color: white;
+    }
+
+    @media print {
+      .distill-site-nav {
+        display: none;
+      }
+    }
+
+    .distill-site-header {
+
+    }
+
+    .distill-site-footer {
+
+    }
+
+
+    /* Site Header */
+
+    .distill-site-header {
+      width: 100%;
+      box-sizing: border-box;
+      z-index: 3;
+    }
+
+    .distill-site-header .nav-left {
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header .nav-left {
+        margin-left: 0;
+      }
+    }
+
+
+    .distill-site-header .nav-right {
+      float: right;
+      margin-right: 8px;
+    }
+
+    .distill-site-header a,
+    .distill-site-header .title {
+      display: inline-block;
+      text-align: center;
+      padding: 14px 10px 14px 10px;
+    }
+
+    .distill-site-header .title {
+      font-size: 18px;
+      min-width: 150px;
+    }
+
+    .distill-site-header .logo {
+      padding: 0;
+    }
+
+    .distill-site-header .logo img {
+      display: none;
+      max-height: 20px;
+      width: auto;
+      margin-bottom: -4px;
+    }
+
+    .distill-site-header .nav-image img {
+      max-height: 18px;
+      width: auto;
+      display: inline-block;
+      margin-bottom: -3px;
+    }
+
+
+
+    @media screen and (min-width: 1000px) {
+      .distill-site-header .logo img {
+        display: inline-block;
+      }
+      .distill-site-header .nav-left {
+        margin-left: 20px;
+      }
+      .distill-site-header .nav-right {
+        margin-right: 20px;
+      }
+      .distill-site-header .title {
+        padding-left: 12px;
+      }
+    }
+
+
+    .distill-site-header .nav-toggle {
+      display: none;
+    }
+
+    .nav-dropdown {
+      display: inline-block;
+      position: relative;
+    }
+
+    .nav-dropdown .nav-dropbtn {
+      border: none;
+      outline: none;
+      color: rgba(255, 255, 255, 0.8);
+      padding: 16px 10px;
+      background-color: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      margin: 0;
+      margin-top: 1px;
+      z-index: 2;
+    }
+
+    .nav-dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 4px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+      z-index: 1;
+      margin-top: 2px;
+      white-space: nowrap;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .nav-dropdown-content hr {
+      margin-top: 4px;
+      margin-bottom: 4px;
+      border: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-dropdown-active {
+      display: block;
+    }
+
+    .nav-dropdown-content a, .nav-dropdown-content .nav-dropdown-header {
+      color: black;
+      padding: 6px 24px;
+      text-decoration: none;
+      display: block;
+      text-align: left;
+    }
+
+    .nav-dropdown-content .nav-dropdown-header {
+      display: block;
+      padding: 5px 24px;
+      padding-bottom: 0;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #999999;
+      white-space: nowrap;
+    }
+
+    .nav-dropdown:hover .nav-dropbtn {
+      color: white;
+    }
+
+    .nav-dropdown-content a:hover {
+      background-color: #ddd;
+      color: black;
+    }
+
+    .nav-right .nav-dropdown-content {
+      margin-left: -45%;
+      right: 0;
+    }
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header a, .distill-site-header .nav-dropdown  {display: none;}
+      .distill-site-header a.nav-toggle {
+        float: right;
+        display: block;
+      }
+      .distill-site-header .title {
+        margin-left: 0;
+      }
+      .distill-site-header .nav-right {
+        margin-right: 0;
+      }
+      .distill-site-header {
+        overflow: hidden;
+      }
+      .nav-right .nav-dropdown-content {
+        margin-left: 0;
+      }
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .distill-site-header.responsive {position: relative; min-height: 500px; }
+      .distill-site-header.responsive a.nav-toggle {
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+      .distill-site-header.responsive a,
+      .distill-site-header.responsive .nav-dropdown {
+        display: block;
+        text-align: left;
+      }
+      .distill-site-header.responsive .nav-left,
+      .distill-site-header.responsive .nav-right {
+        width: 100%;
+      }
+      .distill-site-header.responsive .nav-dropdown {float: none;}
+      .distill-site-header.responsive .nav-dropdown-content {position: relative;}
+      .distill-site-header.responsive .nav-dropdown .nav-dropbtn {
+        display: block;
+        width: 100%;
+        text-align: left;
+      }
+    }
+
+    /* Site Footer */
+
+    .distill-site-footer {
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+      z-index: 3;
+      margin-top: 30px;
+      padding-top: 30px;
+      padding-bottom: 30px;
+      text-align: center;
+    }
+
+    /* Headroom */
+
+    d-title {
+      padding-top: 6rem;
+    }
+
+    @media print {
+      d-title {
+        padding-top: 4rem;
+      }
+    }
+
+    .headroom {
+      z-index: 1000;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .headroom--transition {
+      transition: all .4s ease-in-out;
+    }
+
+    .headroom--unpinned {
+      top: -100px;
+    }
+
+    .headroom--pinned {
+      top: 0;
+    }
+
+    /* adjust viewport for navbar height */
+    /* helps vertically center bootstrap (non-distill) content */
+    .min-vh-100 {
+      min-height: calc(100vh - 100px) !important;
+    }
+
+    </style>
+
+    <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+    <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
+    <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+    <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
+    <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
+    <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
+
+    <script type="application/javascript">
+
+    function getMeta(metaName) {
+      var metas = document.getElementsByTagName('meta');
+      for (let i = 0; i < metas.length; i++) {
+        if (metas[i].getAttribute('name') === metaName) {
+          return metas[i].getAttribute('content');
+        }
+      }
+      return '';
+    }
+
+    function offsetURL(url) {
+      var offset = getMeta('distill:offset');
+      return offset ? offset + '/' + url : url;
+    }
+
+    function createFuseIndex() {
+
+      // create fuse index
+      var options = {
+        keys: [
+          { name: 'title', weight: 20 },
+          { name: 'categories', weight: 15 },
+          { name: 'description', weight: 10 },
+          { name: 'contents', weight: 5 },
+        ],
+        ignoreLocation: true,
+        threshold: 0
+      };
+      var fuse = new window.Fuse([], options);
+
+      // fetch the main search.json
+      return fetch(offsetURL('search.json'))
+        .then(function(response) {
+          if (response.status == 200) {
+            return response.json().then(function(json) {
+              // index main articles
+              json.articles.forEach(function(article) {
+                fuse.add(article);
+              });
+              // download collections and index their articles
+              return Promise.all(json.collections.map(function(collection) {
+                return fetch(offsetURL(collection)).then(function(response) {
+                  if (response.status === 200) {
+                    return response.json().then(function(articles) {
+                      articles.forEach(function(article) {
+                        fuse.add(article);
+                      });
+                    })
+                  } else {
+                    return Promise.reject(
+                      new Error('Unexpected status from search index request: ' +
+                                response.status)
+                    );
+                  }
+                });
+              })).then(function() {
+                return fuse;
+              });
+            });
+
+          } else {
+            return Promise.reject(
+              new Error('Unexpected status from search index request: ' +
+                          response.status)
+            );
+          }
+        });
+    }
+
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+
+      // get search element (bail if we don't have one)
+      var searchEl = window.document.getElementById('distill-search');
+      if (!searchEl)
+        return;
+
+      createFuseIndex()
+        .then(function(fuse) {
+
+          // make search box visible
+          searchEl.classList.remove('hidden');
+
+          // initialize autocomplete
+          var options = {
+            autoselect: true,
+            hint: false,
+            minLength: 2,
+          };
+          window.autocomplete(searchEl, options, [{
+            source: function(query, callback) {
+              const searchOptions = {
+                isCaseSensitive: false,
+                shouldSort: true,
+                minMatchCharLength: 2,
+                limit: 10,
+              };
+              var results = fuse.search(query, searchOptions);
+              callback(results
+                .map(function(result) { return result.item; })
+              );
+            },
+            templates: {
+              suggestion: function(suggestion) {
+                var img = suggestion.preview && Object.keys(suggestion.preview).length > 0
+                  ? `<img src="${offsetURL(suggestion.preview)}"</img>`
+                  : '';
+                var html = `
+                  <div class="search-item">
+                    <h3>${suggestion.title}</h3>
+                    <div class="search-item-description">
+                      ${suggestion.description || ''}
+                    </div>
+                    <div class="search-item-preview">
+                      ${img}
+                    </div>
+                  </div>
+                `;
+                return html;
+              }
+            }
+          }]).on('autocomplete:selected', function(event, suggestion) {
+            window.location.href = offsetURL(suggestion.path);
+          });
+          // remove inline display style on autocompleter (we want to
+          // manage responsive display via css)
+          $('.algolia-autocomplete').css("display", "");
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+
+    });
+
+    </script>
+
+    <style type="text/css">
+
+    .nav-search {
+      font-size: x-small;
+    }
+
+    /* Algolioa Autocomplete */
+
+    .algolia-autocomplete {
+      display: inline-block;
+      margin-left: 10px;
+      vertical-align: sub;
+      background-color: white;
+      color: black;
+      padding: 6px;
+      padding-top: 8px;
+      padding-bottom: 0;
+      border-radius: 6px;
+      border: 1px #0F2E3D solid;
+      width: 180px;
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .distill-site-nav .algolia-autocomplete {
+        display: none;
+        visibility: hidden;
+      }
+      .distill-site-nav.responsive .algolia-autocomplete {
+        display: inline-block;
+        visibility: visible;
+      }
+      .distill-site-nav.responsive .algolia-autocomplete .aa-dropdown-menu {
+        margin-left: 0;
+        width: 400px;
+        max-height: 400px;
+      }
+    }
+
+    .algolia-autocomplete .aa-input, .algolia-autocomplete .aa-hint {
+      width: 90%;
+      outline: none;
+      border: none;
+    }
+
+    .algolia-autocomplete .aa-hint {
+      color: #999;
+    }
+    .algolia-autocomplete .aa-dropdown-menu {
+      width: 550px;
+      max-height: 70vh;
+      overflow-x: visible;
+      overflow-y: scroll;
+      padding: 5px;
+      margin-top: 3px;
+      margin-left: -150px;
+      background-color: #fff;
+      border-radius: 5px;
+      border: 1px solid #999;
+      border-top: none;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion {
+      cursor: pointer;
+      padding: 5px 4px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion:last-of-type {
+      border-bottom: none;
+      margin-bottom: 2px;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item {
+      overflow: hidden;
+      font-size: 0.8em;
+      line-height: 1.4em;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item h3 {
+      font-size: 1rem;
+      margin-block-start: 0;
+      margin-block-end: 5px;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-description {
+      display: inline-block;
+      overflow: hidden;
+      height: 2.8em;
+      width: 80%;
+      margin-right: 4%;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview {
+      display: inline-block;
+      width: 15%;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img {
+      height: 3em;
+      width: auto;
+      display: none;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img[src] {
+      display: initial;
+    }
+
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion.aa-cursor {
+      background-color: #eee;
+    }
+    .algolia-autocomplete .aa-dropdown-menu .aa-suggestion em {
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    </style>
+
+
+    <!--/radix_placeholder_navigation_in_header-->
+    <!--radix_placeholder_site_in_header-->
+    <style type="text/css">
+    .distill-site-nav {
+        background-color: #1D1E1A;
+    }
+
+    </style>
+    <!--/radix_placeholder_site_in_header-->
+    
+    <style type="text/css">
+    body {
+      padding-top: 60px;
+    }
+    </style>
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/countdown-0.3.5/countdown.css" rel="stylesheet" />
+    <script src="libs/countdown-0.3.5/countdown.js"></script>
+    <link rel="stylesheet" href="setup/theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, title-slide
+
+# Using resampling to estimate performance
+## NHS-R Conference 2021
+### Emil Hvitfeldt
+### 2021-11-02
+
+---
+
+<!--radix_placeholder_navigation_before_body-->
+<header class="header header--fixed" role="banner">
+<nav class="distill-site-nav distill-site-header">
+<div class="nav-left">
+<a href="index.html" class="title">NHS tidymodels workshop</a>
+</div>
+<div class="nav-right">
+<a href="index.html">Home</a>
+<div class="nav-dropdown">
+<button class="nav-dropbtn">
+Slides
+ 
+<span class="down-arrow">&#x25BE;</span>
+</button>
+<div class="nav-dropdown-content">
+<a href="1-introduction.html">1: Introduction</a>
+<hr/>
+<a href="2-models.html">2: Models</a>
+<hr/>
+<a href="3-features.html">3: Features</a>
+<hr/>
+<a href="4-resampling.html">4: Resampling</a>
+<hr/>
+<a href="5-tuning.html">5: Tuning</a>
+</div>
+</div>
+<a href="https://github.com/EmilHvitfeldt/nhs-tidymodels-workshop">
+<i class="fab fa-github" aria-hidden="true"></i>
+</a>
+<a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
+</div>
+</nav>
+</header>
+<!--/radix_placeholder_navigation_before_body-->
+<!--radix_placeholder_site_before_body-->
+<!--/radix_placeholder_site_before_body-->
+
+class: inverse, middle, center
+
+
+
+&lt;!--- Packages ---------------------------------------------------------------&gt;
+
+
+
+
+
+
+&lt;!--- Chunk options ----------------------------------------------------------&gt;
+
+
+
+&lt;!--- pkg highlight ----------------------------------------------------------&gt;
+
+&lt;style&gt;
+.pkg {  
+  font-weight: bold;
+  letter-spacing: 0.5pt;
+  color: #866BBF;
+}
+&lt;/style&gt;
+
+&lt;!--- Highlighing colors -----------------------------------------------------&gt;
+
+
+
+&lt;div style = "position:fixed; visibility: hidden"&gt;
+`$$\require{color}\definecolor{purple}{rgb}{0.525490196078431, 0.419607843137255, 0.749019607843137}$$`
+`$$\require{color}\definecolor{green}{rgb}{0.0117647058823529, 0.650980392156863, 0.415686274509804}$$`
+`$$\require{color}\definecolor{orange}{rgb}{0.949019607843137, 0.580392156862745, 0.254901960784314}$$`
+`$$\require{color}\definecolor{white}{rgb}{1, 1, 1}$$`
+&lt;/div&gt;
+
+&lt;script type="text/x-mathjax-config"&gt;
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      purple: ["{\\color{purple}{#1}}", 1],
+      green: ["{\\color{green}{#1}}", 1],
+      orange: ["{\\color{orange}{#1}}", 1],
+      white: ["{\\color{white}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+&lt;/script&gt;
+
+&lt;style&gt;
+.purple {color: #866BBF;}
+.green {color: #03A66A;}
+.orange {color: #F29441;}
+.white {color: #FFFFFF;}
+&lt;/style&gt;
+
+
+
+
+&lt;!--- knitr hooks ------------------------------------------------------------&gt;
+
+
+
+
+
+# [`tidymodels.org`](https://www.tidymodels.org/)
+
+# _Tidy Modeling with R_ ([`tmwr.org`](https://www.tmwr.org/))
+
+---
+
+# What resample?
+
+---
+
+# Resampling methods
+
+.pull-left[
+These are additional data splitting schemes that are applied to the _training_ set and are used for **estimating model performance**. 
+
+They attempt to simulate slightly different versions of the training set. These versions of the original are split into two model subsets:
+
+* The _analysis set_ is used to fit the model (analogous to the training set). 
+* Performance is determined using the _assessment set_. 
+
+This process is repeated many times. 
+
+]
+
+.pull-right[
+
+&lt;img src="images/resampling.svg" width="120%" style="display: block; margin: auto;" /&gt;
+
+]
+
+There are [different flavors of resampling](https://bookdown.org/max/FES/resampling.html) but we will focus on one method in these notes.
+
+---
+
+# The model workflow and resampling
+
+All resampling methods repeat this process multiple times: 
+
+&lt;img src="images/diagram-resampling.svg" width="65%" style="display: block; margin: auto;" /&gt;
+
+The final resampling estimate is the average of all of the estimated metrics (e.g. RMSE, etc).
+
+---
+
+# V-Fold cross-validation
+
+.pull-left[
+
+Here, we randomly split the training data into _V_ distinct blocks of roughly equal size (AKA the "folds").
+
+* We leave out the first block of analysis data and fit a model.
+* This model is used to predict the held-out block of assessment data.
+* We continue this process until we've predicted all _V_ assessment blocks
+
+The final performance is based on the hold-out predictions by _averaging_ the statistics from the _V_ blocks. 
+
+]
+
+.pull-right[
+
+_V_ is usually taken to be 5 or 10 and leave-one-out cross-validation has each sample as a block. 
+
+**Repeated CV** can be used when training set sizes are small. 5 repeats of 10-fold CV averages for 50 sets of metrics.
+
+]
+
+---
+
+#  3-Fold cross-validation with _n_ = 30
+
+Randomly assign each sample to one of three folds
+
+&lt;img src="images/three-CV.svg" width="55%" style="display: block; margin: auto;" /&gt;
+
+---
+
+#  3-Fold cross-validation with _n_ = 30
+
+&lt;img src="images/three-CV-iter.svg" width="65%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Resampling results
+
+The goal of resampling is to produce a single estimate of performance for a model. 
+
+Even though we end up estimating _V_ models (for _V_-fold CV), these models are discarded after we have our performance estimate. 
+
+Resampling is basically an empirical simulation system_ used to understand how well the model would work on _new data_.
+
+---
+
+# Cross-validating using rsample
+
+rsample has a number of resampling functions built in. One is `vfold_cv()`, for performing V-Fold cross-validation like we've been discussing.
+
+
+```r
+set.seed(2453)
+
+cv_splits &lt;- vfold_cv(chi_train) #10-fold is default
+
+cv_splits
+```
+
+```
+## #  10-fold cross-validation 
+## # A tibble: 10 × 2
+##    splits             id    
+##    &lt;list&gt;             &lt;chr&gt; 
+##  1 &lt;split [5115/569]&gt; Fold01
+##  2 &lt;split [5115/569]&gt; Fold02
+##  3 &lt;split [5115/569]&gt; Fold03
+##  4 &lt;split [5115/569]&gt; Fold04
+##  5 &lt;split [5116/568]&gt; Fold05
+##  6 &lt;split [5116/568]&gt; Fold06
+##  7 &lt;split [5116/568]&gt; Fold07
+##  8 &lt;split [5116/568]&gt; Fold08
+##  9 &lt;split [5116/568]&gt; Fold09
+## 10 &lt;split [5116/568]&gt; Fold10
+```
+
+???
+
+Note that `&lt;split [2K/222]&gt;` rounds to the thousandth and is the same as `&lt;1977/222/2199&gt;`
+
+---
+
+# Cross-validating Using rsample 
+
+- Each individual split object is similar to the `initial_split()` example.
+- Use `analysis()` to extract the resample's data used for the fitting process.
+- Use `assessment()` to extract the resample's data used for the performance process.
+
+.pull-left[
+
+
+```r
+cv_splits$splits[[1]]
+```
+
+```
+## &lt;Analysis/Assess/Total&gt;
+## &lt;5115/569/5684&gt;
+```
+
+]
+
+.pull-right[
+
+
+```r
+cv_splits$splits[[1]] %&gt;% 
+  analysis() %&gt;%
+  dim()
+```
+
+```
+## [1] 5115   50
+```
+
+
+```r
+cv_splits$splits[[1]] %&gt;% 
+  assessment() %&gt;%
+  dim()
+```
+
+```
+## [1] 569  50
+```
+
+]
+
+---
+
+# Time series resampling
+
+Our Chicago data is over time. Regular cross-validation, which uses random sampling, may not be the best idea. 
+
+We can emulate our training/test split by making similar resamples. 
+
+* Fold 1: Take the first X years of data as the analysis set, the next 2 weeks as the assessment set.
+* Fold 2: Take the first X years + 2 weeks of data as the analysis set, the next 2 weeks as the assessment set.
+* Fold 3: Take the first X years + 4 weeks of data as the analysis set, the next 2 weeks as the assessment set.
+* and so on
+
+Here a small example with a 3 day assessment set
+
+---
+
+#  Rolling forecast origin resampling
+
+&lt;img src="images/rolling.svg" width="65%" style="display: block; margin: auto;" /&gt;
+
+---
+
+#  Using rsample to do this
+
+
+```r
+chi_rs &lt;-
+  chi_train %&gt;%
+  sliding_period(
+    index = "date"
+  )
+```
+
+Use the `date` column to find the date data. 
+
+---
+
+#   Using rsample to do this
+
+
+```r
+chi_rs &lt;-
+  chi_train %&gt;%
+  sliding_period(
+    index = "date",  
+    period = "week"
+  )
+```
+
+Our units will be weeks. 
+
+---
+
+#   Using rsample to do this
+
+
+```r
+chi_rs &lt;-
+  chi_train %&gt;%
+  sliding_period(
+    index = "date",  
+    period = "week",
+    lookback = 52 * 15
+  )
+```
+
+Every analysis set has 15 years of data
+
+---
+
+#   Using rsample to do this
+
+
+```r
+chi_rs &lt;-
+  chi_train %&gt;%
+  sliding_period(
+    index = "date",  
+    period = "week",
+    lookback = 52 * 15,
+    assess_stop = 2
+  )
+```
+
+Every assessment set has 2 weeks of data
+
+---
+
+#   Using rsample to do this
+
+
+```r
+chi_rs &lt;-
+  chi_train %&gt;%
+  sliding_period(
+    index = "date",  
+    period = "week",
+    lookback = 52 * 15,
+    assess_stop = 2,
+    step = 2
+  )
+```
+
+Increment by 2 weeks so that there are no overlapping assessment sets. For example:
+
+
+```r
+chi_rs$splits[[1]] %&gt;% assessment() %&gt;% pluck("date") %&gt;% range()
+```
+
+```
+## [1] "2016-01-07" "2016-01-20"
+```
+
+```r
+chi_rs$splits[[2]] %&gt;% assessment() %&gt;% pluck("date") %&gt;% range()
+```
+
+```
+## [1] "2016-01-21" "2016-02-03"
+```
+
+---
+
+# Our resampling object
+
+
+```r
+chi_rs
+```
+
+```
+## # Sliding period resampling 
+## # A tibble: 16 × 2
+##    splits            id     
+##    &lt;list&gt;            &lt;chr&gt;  
+##  1 &lt;split [5463/14]&gt; Slice01
+##  2 &lt;split [5467/14]&gt; Slice02
+##  3 &lt;split [5467/14]&gt; Slice03
+##  4 &lt;split [5467/14]&gt; Slice04
+##  5 &lt;split [5467/14]&gt; Slice05
+##  6 &lt;split [5467/14]&gt; Slice06
+##  7 &lt;split [5467/14]&gt; Slice07
+##  8 &lt;split [5467/14]&gt; Slice08
+##  9 &lt;split [5467/14]&gt; Slice09
+## 10 &lt;split [5467/14]&gt; Slice10
+## 11 &lt;split [5467/14]&gt; Slice11
+## 12 &lt;split [5467/14]&gt; Slice12
+## 13 &lt;split [5467/14]&gt; Slice13
+## 14 &lt;split [5467/14]&gt; Slice14
+## 15 &lt;split [5467/14]&gt; Slice15
+## 16 &lt;split [5467/11]&gt; Slice16
+```
+
+We will fit 16 models on  16 slightly different analysis sets. 
+
+Each will produce a separate RMSE and we will average the  16 RMSE values to get the resampling estimate of that statistic. 
+
+
+
+---
+
+# Generating the resampling statistics
+
+Let's use the workflow from the last section (`chi_wflow`). 
+
+In tidymodels, there is a function called `fit_resamples()` that will do all of this for us:
+
+
+```r
+ctrl &lt;- control_resamples(save_pred = TRUE)
+
+chi_res &lt;-
+  chi_wflow %&gt;% 
+  fit_resamples(resamples = chi_rs, control = ctrl)
+chi_res
+```
+
+```
+## # Resampling results
+## # Sliding period resampling 
+## # A tibble: 16 × 5
+##    splits            id      .metrics         .notes           .predictions   
+##    &lt;list&gt;            &lt;chr&gt;   &lt;list&gt;           &lt;list&gt;           &lt;list&gt;         
+##  1 &lt;split [5463/14]&gt; Slice01 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  2 &lt;split [5467/14]&gt; Slice02 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  3 &lt;split [5467/14]&gt; Slice03 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  4 &lt;split [5467/14]&gt; Slice04 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  5 &lt;split [5467/14]&gt; Slice05 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  6 &lt;split [5467/14]&gt; Slice06 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  7 &lt;split [5467/14]&gt; Slice07 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  8 &lt;split [5467/14]&gt; Slice08 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+##  9 &lt;split [5467/14]&gt; Slice09 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 10 &lt;split [5467/14]&gt; Slice10 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 11 &lt;split [5467/14]&gt; Slice11 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 12 &lt;split [5467/14]&gt; Slice12 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 13 &lt;split [5467/14]&gt; Slice13 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 14 &lt;split [5467/14]&gt; Slice14 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 15 &lt;split [5467/14]&gt; Slice15 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [14 × …
+## 16 &lt;split [5467/11]&gt; Slice16 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 1]&gt; &lt;tibble [11 × …
+```
+
+---
+
+# Getting the results
+
+To obtain the resampling estimates of performance: 
+
+
+```r
+collect_metrics(chi_res)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator  mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   1.86     16  0.241  Preprocessor1_Model1
+## 2 rsq     standard   0.946    16  0.0218 Preprocessor1_Model1
+```
+
+To get the holdout predictions: 
+
+
+```r
+chi_pred &lt;- collect_predictions(chi_res)
+chi_pred %&gt;% slice(1:4)
+```
+
+```
+## # A tibble: 4 × 5
+##   id      .pred  .row ridership .config             
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;int&gt;     &lt;dbl&gt; &lt;chr&gt;               
+## 1 Slice01 20.1   5464     20.4  Preprocessor1_Model1
+## 2 Slice01 18.5   5465     20.1  Preprocessor1_Model1
+## 3 Slice01  6.84  5466      4.78 Preprocessor1_Model1
+## 4 Slice01  5.35  5467      3.26 Preprocessor1_Model1
+```
+
+---
+
+# Plot performance
+
+A simple ggplot with a custom `coord_*` can be used. 
+
+.pull-left[
+
+
+```r
+chi_pred %&gt;% 
+  ggplot(aes(.pred, ridership)) + 
+  geom_abline(lty = 2, col = "green") +
+  geom_point(alpha = 0.3, cex = 2) +
+  coord_obs_pred()
+```
+
+We can also use the [`shinymodels`](https://github.com/tidymodels/shinymodels) package to get an interactive version of this plot:
+
+
+```r
+library(shinymodels)
+explore(chi_res, hover_cols = c(date, ridership))
+```
+
+]
+.pull-right[
+
+&lt;img src="4-resampling_files/figure-html/unnamed-chunk-14-1.svg" width="90%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+# Plotting the metrics over time
+
+You can get the per-resample metrics and prediction using the `summarize = FALSE` option.
+
+An example function to add them to the results: 
+
+
+```r
+# Add a date column to time series resampling object metrics
+add_date_to_metrics &lt;- function(x, date_col, value = min, ...) {
+  res &lt;- collect_metrics(x, summarize = FALSE, ...)
+  x %&gt;% 
+    mutate(
+      # Get the assessment set
+      holdout = purrr::map(splits, assessment),
+      # Keep the date colum
+      holdout = purrr::map(holdout, ~ select(.x, all_of(date_col))),
+      # Find a date to represent the range
+      date = purrr::map(holdout, ~ value(.x[[date_col]]))
+    ) %&gt;% 
+    # date is a nested tibble so unnest then merge with results
+   unnest(c(all_of(date_col))) %&gt;% 
+    select(id, all_of(date_col)) %&gt;% 
+    full_join(res, by = "id")
+}
+```
+
+---
+
+# Plotting the metrics over time
+
+.pull-left[
+
+```r
+chi_res %&gt;% 
+  add_date_to_metrics("date") %&gt;% 
+  filter(.metric == "rmse") %&gt;% 
+  ggplot(aes(x = date, y = .estimate)) + 
+  geom_point() + 
+  labs(y = "RMSE") + 
+  scale_x_date(date_breaks = "2 months")
+```
+
+]
+
+.pull-right[
+&lt;img src="4-resampling_files/figure-html/unnamed-chunk-16-1.svg" width="90%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Some notes
+
+* These models fits are independent of one another. [Parallel processing](https://www.tmwr.org/resampling.html#parallel) can be used to significantly speed up the training process. 
+* The individual models can [be saved](https://www.tmwr.org/resampling.html#extract) so you can look at variation in the model parameters or recipes steps. 
+* If you are interested in a [validation set](https://www.tmwr.org/resampling.html#validation), tidymodels considers that a single resample of the data. Everything else in this chapter works the same. 
+
+# Hands-On: Perform resampling
+
+Go to the lab and fit your model within some resamples.
+
+<div class="countdown" id="timer_617fa197" style="right:0;bottom:0;" data-warnwhen="0">
+<code class="countdown-time"><span class="countdown-digits minutes">10</span><span class="countdown-digits colon">:</span><span class="countdown-digits seconds">00</span></code>
+</div>
+    </textarea>
+<!--radix_placeholder_site_after_body-->
+<!--/radix_placeholder_site_after_body-->
+<!--radix_placeholder_navigation_after_body-->
+<!--/radix_placeholder_navigation_after_body-->
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="setup/macros.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "arta",
+"highlightLanguage": ["r", "css", "yaml"],
+"highlightLines": false,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

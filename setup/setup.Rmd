@@ -1,0 +1,133 @@
+
+<!--- Packages --------------------------------------------------------------->
+
+```{r, include=FALSE}
+library(tidymodels)
+tidymodels_prefer()
+
+library(countdown)
+```
+
+```{r, include=FALSE}
+thm <- theme_bw() + 
+  theme(
+    panel.background = element_rect(fill = "transparent", colour = NA), 
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    legend.position = "top",
+    legend.background = element_rect(fill = "transparent", colour = NA),
+    legend.key = element_rect(fill = "transparent", colour = NA)
+  )
+theme_set(thm)
+```
+
+
+<!--- Chunk options ---------------------------------------------------------->
+
+```{r include=FALSE}
+library(knitr)
+opts_chunk$set(
+  echo = TRUE,
+  fig.width = 7, 
+  dpi = 300,
+  fig.align = 'center',
+  fig.asp = 0.618, # 1 / phi
+  out.width = "700px")
+```
+
+<!--- pkg highlight ---------------------------------------------------------->
+
+<style>
+.pkg {  
+  font-weight: bold;
+  letter-spacing: 0.5pt;
+  color: #866BBF;
+}
+</style>
+
+<!--- Highlighing colors ----------------------------------------------------->
+
+```{r, eval=FALSE, include=FALSE}
+# install.packages("devtools")
+# devtools::install_github("EmilHvitfeldt/xaringancolor")
+library(xaringancolor)
+setup_colors(
+  purple = "#866BBF",
+  green = "#03A66A",
+  orange = "#F29441",
+  white = "white"
+)
+```
+
+<div style = "position:fixed; visibility: hidden">
+$$\require{color}\definecolor{purple}{rgb}{0.525490196078431, 0.419607843137255, 0.749019607843137}$$
+$$\require{color}\definecolor{green}{rgb}{0.0117647058823529, 0.650980392156863, 0.415686274509804}$$
+$$\require{color}\definecolor{orange}{rgb}{0.949019607843137, 0.580392156862745, 0.254901960784314}$$
+$$\require{color}\definecolor{white}{rgb}{1, 1, 1}$$
+</div>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      purple: ["{\\color{purple}{#1}}", 1],
+      green: ["{\\color{green}{#1}}", 1],
+      orange: ["{\\color{orange}{#1}}", 1],
+      white: ["{\\color{white}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+</script>
+
+<style>
+.purple {color: #866BBF;}
+.green {color: #03A66A;}
+.orange {color: #F29441;}
+.white {color: #FFFFFF;}
+</style>
+
+
+```{r flair_color, echo=FALSE}
+library(flair)
+purple <- "#866BBF"
+green <- "#03A66A"
+orange <- "#F29441"
+white <- "#FFFFFF"
+```
+
+<!--- knitr hooks ------------------------------------------------------------>
+
+```{r include=FALSE}
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+  lines <- options$output.lines
+  if (is.null(lines)) {
+    return(hook_output(x, options))  # pass to default hook
+  }
+  x <- unlist(strsplit(x, "\n"))
+  more <- "..."
+  if (length(lines) == 1) {        # first n lines
+    if (length(x) > lines) {
+      # truncate the output, but add ....
+      x <- c(head(x, lines), more)
+    }
+  } else {
+    x <- c(more, x[lines], more)
+  }
+  # paste these lines together
+  x <- paste(c(x, ""), collapse = "\n")
+  hook_output(x, options)
+})
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+```
